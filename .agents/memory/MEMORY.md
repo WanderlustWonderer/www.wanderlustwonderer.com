@@ -1,0 +1,1 @@
+- [Next.js 16 in pnpm monorepo](nextjs16-pnpm-monorepo.md) — Turbopack symlink fix + middleware→proxy rename required
