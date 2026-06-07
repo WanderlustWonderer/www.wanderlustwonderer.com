@@ -38,7 +38,7 @@ author="agent"
 
 [[workflows.workflow.tasks]]
 task="shell.exec"
-args="node scripts/webhook.js"
+args="node scripts/webhook.cjs"
 
 [agent]
 stack = "PNPM_WORKSPACE"
