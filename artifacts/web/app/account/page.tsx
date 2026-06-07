@@ -33,7 +33,15 @@ export default async function AccountPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) redirect('/login?next=/account')
+  if (!user) {
+    return (
+      <main className="mx-auto max-w-3xl px-6 py-24 text-center">
+        <h1 className="text-3xl font-semibold">Your Account</h1>
+        <p className="mt-4 opacity-70">Sign in to view your membership and orders.</p>
+        <Link href="/login" className="mt-8 inline-block rounded-full bg-amber-500 px-8 py-3 text-sm font-medium text-black hover:bg-amber-400">Sign in</Link>
+      </main>
+    )
+  }
 
   let { data: profile } = await supabase
     .from('profiles')

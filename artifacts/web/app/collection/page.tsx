@@ -1,6 +1,7 @@
-import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { BuyButton } from '@/components/buy-button'
+import { SiteNav } from '@/components/site-nav'
+import { SiteFooter } from '@/components/site-footer'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,11 +15,6 @@ function formatGbp(pence: number): string {
 
 export default async function CollectionPage() {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect('/login?next=/collection')
-
   // RLS: active products are publicly readable.
   const { data: products } = await supabase
     .from('products')
@@ -27,6 +23,8 @@ export default async function CollectionPage() {
     .order('price', { ascending: false })
 
   return (
+    <div className="bg-black text-neutral-100 min-h-screen">
+    <SiteNav />
     <main className="mx-auto max-w-5xl px-6 py-16">
       <header className="mb-12 text-center">
         <h1 className="text-4xl font-semibold tracking-tight">The Collection</h1>
@@ -71,5 +69,7 @@ export default async function CollectionPage() {
         processed securely by Stripe.
       </p>
     </main>
+    <SiteFooter />
+    </div>
   )
 }
