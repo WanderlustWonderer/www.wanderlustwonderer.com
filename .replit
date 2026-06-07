@@ -3,6 +3,8 @@ modules = ["nodejs-24"]
 [deployment]
 router = "application"
 deploymentTarget = "autoscale"
+build = ["sh", "-c", "pnpm install && pnpm --filter @workspace/web run build"]
+run = ["sh", "-c", "cd artifacts/web && pnpm exec next start -p ${PORT:-3000}"]
 
 [deployment.postBuild]
 args = ["pnpm", "store", "prune"]
