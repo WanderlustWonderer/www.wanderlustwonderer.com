@@ -13,6 +13,7 @@ jobs:
         run: |
           curl -s -X POST "${{ secrets.REPLIT_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
+            -H "x-webhook-secret: ${{ secrets.WEBHOOK_SECRET }}" \
             -d '{"ref":"refs/heads/main","action":"push"}' \
-            --max-time 10 || true
+            --max-time 30 || true
           echo "Replit sync triggered"
