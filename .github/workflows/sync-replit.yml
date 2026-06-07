@@ -1,0 +1,18 @@
+name: Sync to Replit
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Replit git pull
+        run: |
+          curl -s -X POST "${{ secrets.REPLIT_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{"ref":"refs/heads/main","action":"push"}' \
+            --max-time 10 || true
+          echo "Replit sync triggered"
