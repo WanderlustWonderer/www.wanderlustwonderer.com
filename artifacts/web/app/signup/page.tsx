@@ -69,6 +69,14 @@ export default function SignupPage() {
               />
             </div>
 
+            <label className="flex items-start gap-2 text-xs text-gray-500">
+              <input type="checkbox" name="consent" required className="mt-0.5" />
+              <span>
+                I confirm I am 18 or older and I understand the companion chat is an
+                AI ("Wanderlust AI") — not a real person.
+              </span>
+            </label>
+
             {error && (
               <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
                 {error}

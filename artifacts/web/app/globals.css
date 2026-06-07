@@ -24,3 +24,49 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ===== Wanderlust AI companion theme ===== */
+@theme {
+  --color-ink: #08090a;
+  --color-panel: #101113;
+  --color-panel-2: #17181b;
+  --color-line: #232529;
+  --color-fg: #f7f8f8;
+  --color-mute: #8a8f98;
+  --color-accent: #e6b4c8;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-accent);
+  color: #14060c;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.75rem 1.75rem;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-line);
+  color: var(--color-fg);
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.75rem 1.75rem;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.btn-ghost:hover { border-color: var(--color-accent); color: var(--color-accent); }
+
+.glow {
+  box-shadow: 0 0 80px 10px color-mix(in srgb, var(--color-accent) 18%, transparent);
+}

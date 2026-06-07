@@ -1,103 +1,117 @@
 import Link from "next/link";
-import { SiteNav } from "@/components/site-nav";
-import { SiteFooter } from "@/components/site-footer";
+import { CREATOR, TIERS } from "@/config/creator";
+import { EmailCapture } from "@/components/companion/EmailCapture";
 
-export default function HomePage() {
+export default function LandingPage() {
   return (
-    <div className="bg-black text-neutral-100 min-h-screen">
-      <SiteNav />
+    <div className="min-h-screen bg-ink text-fg">
+      {/* Nav */}
+      <header className="border-b border-line">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
+          <span className="text-sm font-semibold tracking-[0.2em] uppercase">
+            {CREATOR.displayName}
+          </span>
+          <nav className="flex items-center gap-4 text-sm">
+            <Link href="/pricing" className="text-mute hover:text-fg transition">Pricing</Link>
+            <Link href="/login" className="text-mute hover:text-fg transition">Sign in</Link>
+            <Link href="/chat" className="btn-primary !px-5 !py-2">Start chatting</Link>
+          </nav>
+        </div>
+      </header>
+
       <main>
         {/* Hero */}
-        <section className="mx-auto max-w-4xl px-6 py-20 text-center">
-          <h1 className="text-3xl md:text-4xl font-semibold leading-snug">
-            Curious? Step inside and explore the Muse&rsquo;s content this week.
+        <section className="mx-auto max-w-3xl px-6 pt-24 pb-16 text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-line bg-panel px-4 py-1.5 text-xs text-mute">
+            <span className="inline-block h-2 w-2 rounded-full bg-accent animate-pulse" />
+            {CREATOR.aiName} — {CREATOR.aiTagline}
+          </span>
+          <h1 className="mt-8 text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
+            Talk to me.
+            <br />
+            <span className="text-accent">Any hour. Any mood.</span>
           </h1>
-          <img
-            src="https://wanderlustwonderer.com/wp-content/uploads/2026/03/Gemini_Generated_Image_witntgwitntgwitn.png"
-            alt="Wanderlust Wonderer"
-            className="mx-auto mt-10 w-64 rounded-full border border-amber-500/30"
-          />
-          <Link
-            href="/subscribe"
-            className="mt-10 inline-block rounded-full bg-amber-500 px-10 py-4 text-sm font-medium tracking-[0.2em] text-black hover:bg-amber-400 transition"
-          >
-            STEP INTO MY FREQUENCY
-          </Link>
+          <p className="mx-auto mt-6 max-w-xl text-lg text-mute">
+            I trained my own AI on my voice, my world, my energy — so the
+            conversation never has to stop. Flirty, funny, always awake. Openly
+            AI, unmistakably me.
+          </p>
+          <div className="mt-10 flex items-center justify-center gap-4">
+            <Link href="/chat" className="btn-primary glow">
+              Start chatting free
+            </Link>
+            <Link href="/pricing" className="btn-ghost">
+              See plans
+            </Link>
+          </div>
+          <p className="mt-4 text-xs text-mute">
+            10 free messages. No card required.
+          </p>
         </section>
 
-        {/* The Unfiltered Truth */}
-        <section className="border-t border-neutral-900">
-          <div className="mx-auto max-w-5xl px-6 py-20 grid gap-10 md:grid-cols-2 items-center">
-            <img
-              src="https://wanderlustwonderer.com/wp-content/uploads/2026/03/0364f776-9c06-4481-b5d3-b83a6053b8da-edited.jpg"
-              alt="The Unfiltered Truth"
-              className="rounded-2xl border border-neutral-800"
-            />
-            <div>
-              <h2 className="text-2xl font-semibold">The Unfiltered Truth</h2>
-              <p className="mt-4 leading-relaxed text-neutral-300">
-                Social media is a performance for the masses; this is the reality for the
-                elite. I have moved my raw, unedited journey here, away from the
-                restrictions of the public eye. You are invited to witness the sacred
-                discipline of the mat to my most private adventures.
-              </p>
-              <Link href="/subscribe" className="mt-6 inline-block text-amber-400 tracking-[0.2em] text-sm hover:text-amber-300">
-                ENTER THE PORTAL →
-              </Link>
-            </div>
+        {/* Teaser strip */}
+        <section className="border-y border-line bg-panel">
+          <div className="mx-auto grid max-w-5xl gap-4 px-6 py-12 md:grid-cols-3">
+            {[
+              { q: "“good morning… tell me where you'd take me first in Bali”", a: "Barefoot to the rice terraces before the world wakes up. Then I'd decide if you've earned breakfast. 🌅" },
+              { q: "“I had the worst day”", a: "Then stop. Breathe in for four with me. I'm not going anywhere — tell me everything." },
+              { q: "“are you actually real?”", a: "I'm her AI — trained by her, in her voice. The mystery is real; the disclosure is too. ✨" },
+            ].map((t) => (
+              <div key={t.q} className="rounded-2xl border border-line bg-panel-2 p-5">
+                <p className="text-sm text-mute">{t.q}</p>
+                <p className="mt-3 text-sm text-fg">{t.a}</p>
+              </div>
+            ))}
           </div>
         </section>
 
-        {/* Direct offerings */}
-        <section className="border-t border-neutral-900">
-          <div className="mx-auto max-w-5xl px-6 py-20 grid gap-10 md:grid-cols-2 items-center">
-            <div className="md:order-2">
-              <img
-                src="https://wanderlustwonderer.com/wp-content/uploads/2026/03/IMG_5317-edited.jpg"
-                alt="The Collection"
-                className="rounded-2xl border border-neutral-800"
-              />
-            </div>
-            <div className="md:order-1">
-              <h2 className="text-2xl font-semibold">Direct offerings for the modern Muse.</h2>
-              <p className="mt-4 leading-relaxed text-neutral-300">
-                A life of exquisite beauty requires constant cultivation. Whether it is
-                aura-boosting florals, my daily caffeine ritual, or sponsorship for my next
-                spontaneous escape, your tribute is the energy that keeps this story
-                unfolding. I do not ask; I simply provide the opportunity for you to be
-                useful.
-              </p>
-              <Link href="/tribute" className="mt-6 inline-block text-amber-400 tracking-[0.2em] text-sm hover:text-amber-300">
-                SUBMIT TRIBUTE →
-              </Link>
-            </div>
+        {/* Tiers preview */}
+        <section className="mx-auto max-w-5xl px-6 py-20">
+          <h2 className="text-center text-2xl font-semibold">Closer, on your terms</h2>
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {(["fan", "vip", "inner"] as const).map((key) => {
+              const tier = TIERS[key];
+              return (
+                <div key={key} className={`rounded-2xl border p-6 ${key === "vip" ? "border-accent/60 glow" : "border-line"} bg-panel`}>
+                  <h3 className="font-semibold">{tier.name}</h3>
+                  <p className="mt-1 text-2xl font-semibold">{tier.priceLabel}</p>
+                  <p className="mt-2 text-sm text-mute">{tier.blurb}</p>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-8 text-center">
+            <Link href="/pricing" className="btn-ghost">Full pricing →</Link>
           </div>
         </section>
 
-        {/* Personalised & Private */}
-        <section className="border-t border-neutral-900">
-          <div className="mx-auto max-w-5xl px-6 py-20 grid gap-10 md:grid-cols-2 items-center">
-            <img
-              src="https://wanderlustwonderer.com/wp-content/uploads/2026/03/whatsapp-image-2026-03-08-at-21.07.30-24-edited.jpeg"
-              alt="Personalised and Private"
-              className="rounded-2xl border border-neutral-800"
-            />
-            <div>
-              <h2 className="text-2xl font-semibold">Personalised &amp; Private</h2>
-              <p className="mt-4 leading-relaxed text-neutral-300">
-                Your desire, my design. For those who seek a more direct connection, I
-                accept bespoke requests. From private yoga flows to tailored experiences
-                designed specifically for your eyes — state your intent and provide your
-                offering. I set the terms; you reap the reward.
-              </p>
-              <Link href="/tribute" className="mt-6 inline-block text-amber-400 tracking-[0.2em] text-sm hover:text-amber-300">
-                SEND YOUR INTENT →
-              </Link>
-            </div>
+        {/* Email capture */}
+        <section className="border-t border-line bg-panel">
+          <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 px-6 py-16 text-center">
+            <h2 className="text-xl font-semibold">New drops, voice notes, surprises</h2>
+            <p className="text-sm text-mute">Be first to know what the Muse builds next.</p>
+            <EmailCapture />
           </div>
         </section>
       </main>
-      <SiteFooter />
+
+      {/* Footer with required disclosures */}
+      <footer className="border-t border-line">
+        <div className="mx-auto max-w-5xl space-y-4 px-6 py-12 text-center text-xs text-mute">
+          <p className="font-medium text-fg">
+            18+ only. {CREATOR.aiName} is an artificial intelligence companion —
+            not a real person. All conversations are with AI.
+          </p>
+          <p>
+            © 2026 {CREATOR.displayName} · <Link href="/terms" className="underline hover:text-fg">Terms</Link> ·{" "}
+            <Link href="/privacy" className="underline hover:text-fg">Privacy</Link>
+          </p>
+          <p>
+            <a href={CREATOR.socials.instagram} className="hover:text-fg">Instagram</a> ·{" "}
+            <a href={CREATOR.socials.tiktok} className="hover:text-fg">TikTok</a>
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
