@@ -1,6 +1,4 @@
 import { CREATOR } from "@/config/creator";
-import { memoryDepth } from "./entitlements";
-import type { TierKey } from "@/config/creator";
 
 export interface HistoryMessage {
   role: "fan" | "ai";
@@ -29,9 +27,10 @@ export function buildSystemPrompt(memorySummary: string): string {
   ].join("\n");
 }
 
-/** Select the most recent slice of history allowed by the fan's tier. */
-export function selectHistory(messages: HistoryMessage[], tier: TierKey): HistoryMessage[] {
-  const depth = memoryDepth(tier);
-  if (messages.length <= depth) return messages;
-  return messages.slice(messages.length - depth);
+export const MEMORY_DEPTH = 40;
+
+/** Select the most recent slice of history the AI remembers. */
+export function selectHistory(messages: HistoryMessage[]): HistoryMessage[] {
+  if (messages.length <= MEMORY_DEPTH) return messages;
+  return messages.slice(messages.length - MEMORY_DEPTH);
 }

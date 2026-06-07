@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CREATOR, TIERS } from "@/config/creator";
+import { CREATOR } from "@/config/creator";
 import { EmailCapture } from "@/components/companion/EmailCapture";
 
 export default function LandingPage() {
@@ -45,7 +45,7 @@ export default function LandingPage() {
             </Link>
           </div>
           <p className="mt-4 text-xs text-mute">
-            10 free messages. No card required.
+            3 free credits on signup. No card required.
           </p>
         </section>
 
@@ -69,16 +69,17 @@ export default function LandingPage() {
         <section className="mx-auto max-w-5xl px-6 py-20">
           <h2 className="text-center text-2xl font-semibold">Closer, on your terms</h2>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {(["fan", "vip", "inner"] as const).map((key) => {
-              const tier = TIERS[key];
-              return (
-                <div key={key} className={`rounded-2xl border p-6 ${key === "vip" ? "border-accent/60 glow" : "border-line"} bg-panel`}>
-                  <h3 className="font-semibold">{tier.name}</h3>
-                  <p className="mt-1 text-2xl font-semibold">{tier.priceLabel}</p>
-                  <p className="mt-2 text-sm text-mute">{tier.blurb}</p>
-                </div>
-              );
-            })}
+            {[
+              { name: "The Gallery", price: "£55/mo", blurb: "5 free chat credits monthly + weekly exclusive content." },
+              { name: "Private World", price: "£100/mo", blurb: "8 free chat credits monthly + behind-the-lens sanctuary.", featured: true },
+              { name: "All Access", price: "£250/mo", blurb: "15 free chat credits monthly + the full unfiltered story." },
+            ].map((tier) => (
+              <div key={tier.name} className={`rounded-2xl border p-6 ${tier.featured ? "border-accent/60 glow" : "border-line"} bg-panel`}>
+                <h3 className="font-semibold">{tier.name}</h3>
+                <p className="mt-1 text-2xl font-semibold">{tier.price}</p>
+                <p className="mt-2 text-sm text-mute">{tier.blurb}</p>
+              </div>
+            ))}
           </div>
           <div className="mt-8 text-center">
             <Link href="/pricing" className="btn-ghost">Full pricing →</Link>

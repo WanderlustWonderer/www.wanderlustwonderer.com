@@ -1,191 +1,184 @@
-import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
-import { reconcileLegacyMember } from '@/lib/stripe/reconcile'
+import Link from "next/link";
+import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
+import { reconcileLegacyMember } from "@/lib/stripe/reconcile";
+import { balances } from "@/lib/wallet/ledger";
+import { CREDIT_PACKS } from "@/config/creator";
+import { CheckoutButton } from "@/components/companion/CheckoutButton";
+import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 const TIER_NAME: Record<string, string> = {
-  the_gallery: 'The Gallery',
-  private_world: 'Private World',
-  all_access: 'All Access',
-}
+  the_gallery: "The Gallery",
+  private_world: "Private World",
+  all_access: "All Access",
+};
 
-function formatGbp(pence: number): string {
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    minimumFractionDigits: pence % 100 === 0 ? 0 : 2,
-  }).format(pence / 100)
-}
+const MONTHLY_CREDITS: Record<string, number> = {
+  the_gallery: 5,
+  private_world: 8,
+  all_access: 15,
+};
+
+const LEDGER_LABELS: Record<string, string> = {
+  signup_bonus: "Welcome credits",
+  monthly_grant: "Monthly membership credits",
+  monthly_void: "Expired with renewal",
+  credit_purchase: "Top-up",
+  message: "Message sent",
+  auto_refund: "Refund (message failed)",
+};
 
 function formatDate(iso: string | null): string {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export default async function AccountPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
+
   if (!user) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-24 text-center">
-        <h1 className="text-3xl font-semibold">Your Account</h1>
-        <p className="mt-4 opacity-70">Sign in to view your membership and orders.</p>
-        <Link href="/login" className="mt-8 inline-block rounded-full bg-amber-500 px-8 py-3 text-sm font-medium text-black hover:bg-amber-400">Sign in</Link>
-      </main>
-    )
+      <div className="bg-black text-neutral-100 min-h-screen">
+        <SiteNav />
+        <main className="mx-auto max-w-3xl px-6 py-24 text-center">
+          <h1 className="text-3xl font-semibold">Your Account</h1>
+          <p className="mt-4 opacity-70">Sign in to view your membership, wallet and chat.</p>
+          <Link href="/login" className="mt-8 inline-block rounded-full bg-amber-500 px-8 py-3 text-sm font-medium text-black hover:bg-amber-400">
+            Sign in
+          </Link>
+        </main>
+        <SiteFooter />
+      </div>
+    );
   }
 
-  let { data: profile } = await supabase
-    .from('profiles')
-    .select(
-      'membership_tier, subscription_status, subscription_end_date, stripe_customer_id',
-    )
-    .eq('id', user.id)
-    .maybeSingle()
+  const admin = createAdminClient();
 
-  // Legacy member from the old site? Link their Stripe subscription by email.
+  let { data: profile } = await admin
+    .from("profiles")
+    .select("membership_tier, subscription_status, subscription_end_date, stripe_customer_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
   if (!profile?.stripe_customer_id) {
-    const linked = await reconcileLegacyMember(user.id, user.email)
+    const linked = await reconcileLegacyMember(user.id, user.email);
     if (linked) {
-      const { data } = await supabase
-        .from('profiles')
-        .select(
-          'membership_tier, subscription_status, subscription_end_date, stripe_customer_id',
-        )
-        .eq('id', user.id)
-        .maybeSingle()
-      profile = data
+      const { data } = await admin
+        .from("profiles")
+        .select("membership_tier, subscription_status, subscription_end_date, stripe_customer_id")
+        .eq("id", user.id)
+        .maybeSingle();
+      profile = data;
     }
   }
 
   const isMember =
     !!profile?.subscription_status &&
-    ['active', 'trialing'].includes(profile.subscription_status)
+    ["active", "trialing"].includes(profile.subscription_status);
+  const tier = isMember ? (profile?.membership_tier ?? null) : null;
 
-  // RLS: members can only read their own orders/bookings.
-  const [{ data: orders }, { data: bookings }] = await Promise.all([
-    supabase
-      .from('orders')
-      .select('id, status, created_at, products(name, price)')
-      .order('created_at', { ascending: false })
-      .limit(20),
-    supabase
-      .from('bookings')
-      .select('id, status, scheduled_at, meeting_url, products(name)')
-      .order('created_at', { ascending: false })
-      .limit(20),
-  ])
+  const [wallet, { data: ledger }] = await Promise.all([
+    balances(admin, user.id),
+    admin
+      .from("credit_ledger")
+      .select("delta, reason, pot, created_at")
+      .eq("profile_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(50),
+  ]);
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
-      <h1 className="text-4xl font-semibold tracking-tight">Your Account</h1>
-      <p className="mt-2 text-sm opacity-60">{user.email}</p>
+    <div className="bg-black text-neutral-100 min-h-screen">
+      <SiteNav />
+      <main className="mx-auto max-w-3xl px-6 py-16">
+        <h1 className="text-4xl font-semibold tracking-tight">Your Account</h1>
+        <p className="mt-2 text-sm opacity-60">{user.email}</p>
 
-      {/* Membership */}
-      <section className="mt-10 rounded-2xl border border-neutral-700 p-8">
-        <h2 className="text-lg font-semibold">Membership</h2>
-        {isMember ? (
-          <>
-            <p className="mt-3">
-              <span className="text-2xl font-semibold text-amber-500">
-                {TIER_NAME[profile?.membership_tier ?? ''] ?? '—'}
-              </span>
-              {profile?.subscription_status === 'trialing' && (
-                <span className="ml-3 rounded-full border border-amber-500/50 px-3 py-0.5 text-xs uppercase tracking-wide text-amber-500">
-                  Trial
-                </span>
-              )}
+        {/* Membership */}
+        <section className="mt-10 rounded-2xl border border-neutral-700 p-8">
+          <h2 className="text-lg font-semibold">Membership</h2>
+          {isMember && tier ? (
+            <>
+              <p className="mt-3 text-2xl font-semibold text-amber-500">{TIER_NAME[tier] ?? tier}</p>
+              <p className="mt-2 text-sm opacity-70">
+                {MONTHLY_CREDITS[tier] ?? 0} free chat credits each month · renews {formatDate(profile?.subscription_end_date ?? null)}
+              </p>
+              <a href="/api/stripe/portal" className="mt-5 inline-block rounded-full border border-neutral-500 px-6 py-3 text-sm hover:border-amber-500 hover:text-amber-500">
+                Manage subscription &amp; billing
+              </a>
+            </>
+          ) : (
+            <>
+              <p className="mt-3 opacity-70">Guest account — you can chat with purchased credits, or join for monthly free credits and exclusive content.</p>
+              <Link href="/subscribe" className="mt-5 inline-block rounded-full bg-amber-500 px-6 py-3 text-sm font-medium text-black hover:bg-amber-400">
+                Become a member
+              </Link>
+            </>
+          )}
+        </section>
+
+        {/* Wallet */}
+        <section className="mt-8 rounded-2xl border border-amber-500/40 p-8">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-lg font-semibold">Wallet</h2>
+            <p className="text-4xl font-semibold text-amber-500">
+              {wallet.total}
+              <span className="ml-2 text-sm font-normal text-neutral-400">credit{wallet.total === 1 ? "" : "s"}</span>
             </p>
-            <p className="mt-2 text-sm opacity-70">
-              Renews {formatDate(profile?.subscription_end_date ?? null)}
+          </div>
+          {wallet.subscription > 0 && (
+            <p className="mt-1 text-xs opacity-60">
+              {wallet.subscription} membership credit{wallet.subscription === 1 ? "" : "s"} expire at your next renewal — they're spent first.
             </p>
-            <a
-              href="/api/stripe/portal"
-              className="mt-5 inline-block rounded-full border border-neutral-500 px-6 py-3 text-sm hover:border-amber-500 hover:text-amber-500"
-            >
-              Manage subscription & billing
-            </a>
-          </>
-        ) : (
-          <>
-            <p className="mt-3 opacity-70">You are not a member yet.</p>
-            <Link
-              href="/subscribe"
-              className="mt-5 inline-block rounded-full bg-amber-500 px-6 py-3 text-sm font-medium text-black hover:bg-amber-400"
-            >
-              Enter The Portal
+          )}
+          <p className="mt-4 text-sm opacity-70">1 credit = 1 chat message (max 250 characters). Purchased credits never expire.</p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {CREDIT_PACKS.map((pack) => (
+              <div key={pack.key} className="rounded-xl border border-neutral-700 p-4 text-center">
+                <p className="text-xl font-semibold">{pack.credits} credit{pack.credits === 1 ? "" : "s"}</p>
+                <p className="text-sm opacity-60">{pack.priceLabel}</p>
+                <div className="mt-3">
+                  <CheckoutButton kind="credits" itemKey={pack.key} label={`Buy for ${pack.priceLabel}`} featured={pack.key === "pack20"} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 text-center">
+            <Link href="/chat" className="inline-block rounded-full bg-amber-500 px-8 py-3 text-sm font-medium text-black hover:bg-amber-400">
+              Open chat
             </Link>
-          </>
-        )}
-      </section>
+          </div>
+        </section>
 
-      {/* Bookings */}
-      <section className="mt-8 rounded-2xl border border-neutral-700 p-8">
-        <h2 className="text-lg font-semibold">Live sessions</h2>
-        {bookings && bookings.length > 0 ? (
-          <ul className="mt-4 divide-y divide-neutral-800">
-            {bookings.map((booking) => (
-              <li key={booking.id} className="flex items-center justify-between py-3 text-sm">
-                <div>
-                  <p className="font-medium">{booking.products?.name ?? 'Session'}</p>
-                  <p className="opacity-60">
-                    {booking.scheduled_at
-                      ? formatDate(booking.scheduled_at)
-                      : 'Awaiting arrangement — the Muse will contact you'}
-                  </p>
-                </div>
-                {booking.meeting_url ? (
-                  <a
-                    href={booking.meeting_url}
-                    className="rounded-full bg-amber-500 px-4 py-1.5 text-xs font-medium text-black hover:bg-amber-400"
-                  >
-                    Join
-                  </a>
-                ) : (
-                  <span className="text-xs uppercase tracking-wide opacity-50">
-                    {booking.status}
+        {/* History */}
+        <section className="mt-8 rounded-2xl border border-neutral-700 p-8">
+          <h2 className="text-lg font-semibold">Wallet history</h2>
+          {ledger && ledger.length > 0 ? (
+            <ul className="mt-4 divide-y divide-neutral-800">
+              {ledger.map((row, i) => (
+                <li key={i} className="flex items-center justify-between py-3 text-sm">
+                  <div>
+                    <p className="font-medium">{LEDGER_LABELS[row.reason] ?? row.reason}</p>
+                    <p className="text-xs opacity-50">{formatDate(row.created_at)}</p>
+                  </div>
+                  <span className={row.delta >= 0 ? "text-emerald-400" : "text-neutral-400"}>
+                    {row.delta >= 0 ? `+${row.delta}` : row.delta}
                   </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-3 text-sm opacity-50">No sessions yet.</p>
-        )}
-      </section>
-
-      {/* Orders */}
-      <section className="mt-8 rounded-2xl border border-neutral-700 p-8">
-        <h2 className="text-lg font-semibold">Order history</h2>
-        {orders && orders.length > 0 ? (
-          <ul className="mt-4 divide-y divide-neutral-800">
-            {orders.map((order) => (
-              <li key={order.id} className="flex items-center justify-between py-3 text-sm">
-                <div>
-                  <p className="font-medium">{order.products?.name ?? 'Item'}</p>
-                  <p className="opacity-60">{formatDate(order.created_at)}</p>
-                </div>
-                <div className="text-right">
-                  <p>{order.products ? formatGbp(order.products.price) : ''}</p>
-                  <p className="text-xs uppercase tracking-wide opacity-50">
-                    {order.status}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-3 text-sm opacity-50">No orders yet.</p>
-        )}
-      </section>
-    </main>
-  )
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm opacity-50">No activity yet.</p>
+          )}
+        </section>
+      </main>
+      <SiteFooter />
+    </div>
+  );
 }

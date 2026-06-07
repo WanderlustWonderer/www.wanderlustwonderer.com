@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { ChatView } from "@/components/companion/ChatView";
+import { balances } from "@/lib/wallet/ledger";
 import { CREATOR } from "@/config/creator";
 
 export const dynamic = "force-dynamic";
@@ -33,8 +34,8 @@ export default async function ChatPage() {
 
   // Resume latest conversation if one exists.
   const admin = createAdminClient();
-  const [{ data: profile }, { data: conversation }] = await Promise.all([
-    admin.from("companion_profiles").select("tier").eq("id", user.id).maybeSingle(),
+  const [walletBalances, { data: conversation }] = await Promise.all([
+    balances(admin, user.id),
     admin
       .from("conversations")
       .select("id")
@@ -59,7 +60,7 @@ export default async function ChatPage() {
     <ChatView
       initialMessages={initialMessages}
       initialConversationId={conversation?.id ?? null}
-      tier={profile?.tier ?? "free"}
+      initialBalance={walletBalances.total}
     />
   );
 }

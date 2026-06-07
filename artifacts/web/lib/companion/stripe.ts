@@ -18,7 +18,7 @@ export function priceIdForTier(tier: TierKey): string | null {
   return env ? (process.env[env] ?? null) : null;
 }
 
-export function priceIdForPack(key: "small" | "large"): string | null {
+export function priceIdForPack(key: "single" | "pack20"): string | null {
   const pack = CREDIT_PACKS.find((p) => p.key === key);
   return pack ? (process.env[pack.priceEnv] ?? null) : null;
 }

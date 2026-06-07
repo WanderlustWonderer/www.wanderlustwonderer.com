@@ -50,7 +50,7 @@ export async function POST(req: Request) {
   }
 
   if (body.kind === "credits") {
-    const price = priceIdForPack(body.key as "small" | "large");
+    const price = priceIdForPack(body.key as "single" | "pack20");
     if (!price) return NextResponse.json({ error: "unknown_pack" }, { status: 400 });
     const session = await stripe.checkout.sessions.create({
       ...common,

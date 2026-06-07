@@ -10,6 +10,8 @@ import {
   type WebhookAction,
 } from "@/lib/companion/webhook-handlers";
 import { tierFromPriceId, creditsFromPriceId } from "@/lib/companion/stripe";
+import { applyRenewal, grantPurchase } from "@/lib/wallet/ledger";
+import { PRICE_TO_TIER } from "@/lib/stripe/tiers";
 
 export const runtime = "nodejs";
 
@@ -120,12 +122,7 @@ async function applyActions(
           .is("stripe_customer_id", null);
         break;
       case "grant_credits":
-        await admin.from("credit_ledger").insert({
-          profile_id: action.profileId,
-          delta: action.credits,
-          reason: action.reason,
-          stripe_event_id: action.stripeEventId,
-        });
+        await grantPurchase(admin, action.profileId, action.credits, action.stripeEventId);
         break;
       case "upsert_subscription":
         await admin.from("companion_subscriptions").upsert(
@@ -222,6 +219,23 @@ async function handleMembershipSubscriptionChange(subscription: Stripe.Subscript
   const userId = await findUserForCustomer(customerId, email);
   if (!userId) return;
   await syncSubscriptionToProfile(userId, customerId, subscription);
+
+  // --- Wallet: monthly credit grants (use-it-or-lose-it) ---
+  const admin = createAdminClient();
+  const item = subscription.items?.data?.[0];
+  const periodEnd =
+    item?.current_period_end ??
+    (subscription as unknown as { current_period_end?: number }).current_period_end ??
+    0;
+  const active = subscription.status === "active" || subscription.status === "trialing";
+  const tier = item?.price?.id ? (PRICE_TO_TIER[item.price.id] ?? null) : null;
+  if (active && tier) {
+    // One grant per billing period: idempotency key = subId:periodEnd.
+    await applyRenewal(admin, userId, tier, `${subscription.id}:${periodEnd}`);
+  } else {
+    // Canceled/lapsed: void remaining subscription credits once per period.
+    await applyRenewal(admin, userId, null, `${subscription.id}:void:${periodEnd}`);
+  }
 }
 
 function membershipAdmin() {

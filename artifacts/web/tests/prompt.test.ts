@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildSystemPrompt, selectHistory, type HistoryMessage } from "@/lib/companion/prompt";
+import { buildSystemPrompt, selectHistory, MEMORY_DEPTH, type HistoryMessage } from "@/lib/companion/prompt";
 
 describe("buildSystemPrompt", () => {
   const prompt = buildSystemPrompt("");
@@ -36,18 +36,12 @@ describe("selectHistory", () => {
     }));
 
   it("returns everything under the depth limit", () => {
-    expect(selectHistory(make(5), "free")).toHaveLength(5);
+    expect(selectHistory(make(5))).toHaveLength(5);
   });
 
-  it("trims to tier depth keeping the most recent", () => {
-    const result = selectHistory(make(200), "fan");
-    expect(result).toHaveLength(24);
-    expect(result[23].content).toBe("msg 199");
-  });
-
-  it("deeper tiers remember more", () => {
-    expect(selectHistory(make(200), "inner").length).toBeGreaterThan(
-      selectHistory(make(200), "fan").length
-    );
+  it("trims to MEMORY_DEPTH keeping the most recent", () => {
+    const result = selectHistory(make(200));
+    expect(result).toHaveLength(MEMORY_DEPTH);
+    expect(result[result.length - 1].content).toBe("msg 199");
   });
 });

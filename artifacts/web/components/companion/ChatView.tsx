@@ -9,20 +9,23 @@ interface Message {
   content: string;
 }
 
+const MAX_CHARS = 250;
+
 export function ChatView({
   initialMessages,
   initialConversationId,
-  tier,
+  initialBalance,
 }: {
   initialMessages: Message[];
   initialConversationId: string | null;
-  tier: string;
+  initialBalance: number;
 }) {
+  const [balance, setBalance] = useState(initialBalance);
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [conversationId, setConversationId] = useState(initialConversationId);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-  const [paywall, setPaywall] = useState<null | "subscribe_or_topup" | "topup">(null);
+  const [paywall, setPaywall] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -49,7 +52,7 @@ export function ChatView({
       if (res.status === 402) {
         setMessages((m) => m.slice(0, -1));
         setDraft(message);
-        setPaywall(data.reason ?? "subscribe_or_topup");
+        setPaywall(true);
         return;
       }
       if (!res.ok) {
@@ -60,6 +63,7 @@ export function ChatView({
       }
       setConversationId(data.conversationId);
       setMessages((m) => [...m, { role: "ai", content: data.reply }]);
+      if (typeof data.balance === "number") setBalance(data.balance);
     } catch {
       setMessages((m) => m.slice(0, -1));
       setDraft(message);
@@ -86,8 +90,10 @@ export function ChatView({
           </span>
         </div>
         <div className="flex items-center gap-3 text-xs">
-          <span className="rounded-full border border-line px-2.5 py-1 capitalize text-mute">{tier}</span>
-          <Link href="/pricing" className="text-mute hover:text-accent transition">Upgrade</Link>
+          <span className="rounded-full border border-line px-2.5 py-1 text-mute">
+            {balance} credit{balance === 1 ? "" : "s"}
+          </span>
+          <Link href="/account" className="text-mute hover:text-accent transition">Top up</Link>
         </div>
       </header>
 
@@ -135,13 +141,18 @@ export function ChatView({
           }}
           className="flex gap-2"
         >
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder={`Message ${CREATOR.aiName}…`}
-            maxLength={2000}
-            className="flex-1 rounded-full border border-line bg-panel-2 px-5 py-3 text-sm outline-none placeholder:text-mute focus:border-accent transition"
-          />
+          <div className="relative flex-1">
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value.slice(0, MAX_CHARS))}
+              placeholder={`Message ${CREATOR.aiName}…`}
+              maxLength={MAX_CHARS}
+              className="w-full rounded-full border border-line bg-panel-2 px-5 py-3 pr-16 text-sm outline-none placeholder:text-mute focus:border-accent transition"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-mute">
+              {draft.length}/{MAX_CHARS}
+            </span>
+          </div>
           <button type="submit" disabled={sending || !draft.trim()} className="btn-primary !px-6">
             Send
           </button>
@@ -156,21 +167,15 @@ export function ChatView({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
           <div className="w-full max-w-sm rounded-2xl border border-line bg-panel p-6 text-center">
             <p className="text-2xl">✦</p>
-            <h2 className="mt-3 text-lg font-semibold">
-              {paywall === "subscribe_or_topup" ? "Don't stop now…" : "Out of messages for today"}
-            </h2>
+            <h2 className="mt-3 text-lg font-semibold">Out of credits</h2>
             <p className="mt-2 text-sm text-mute">
-              {paywall === "subscribe_or_topup"
-                ? "Your free messages are spent. Join a plan for daily conversation, or grab credits that never expire."
-                : "You've used today's allowance. Top up with credits that never expire — or upgrade your plan."}
+              Top up to keep the conversation going — £5 per credit or £88 for 20.
+              Members receive free credits every month.
             </p>
             <div className="mt-6 flex flex-col gap-2">
-              <Link href="/pricing" className="btn-primary w-full">
-                {paywall === "subscribe_or_topup" ? "See plans" : "Top up credits"}
-              </Link>
-              <button onClick={() => setPaywall(null)} className="btn-ghost w-full">
-                Not now
-              </button>
+              <Link href="/account" className="btn-primary w-full">Top up credits</Link>
+              <Link href="/subscribe" className="btn-ghost w-full">Become a member</Link>
+              <button onClick={() => setPaywall(false)} className="btn-ghost w-full">Not now</button>
             </div>
           </div>
         </div>

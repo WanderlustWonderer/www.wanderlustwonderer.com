@@ -72,15 +72,15 @@ export const TIERS: Record<TierKey, TierConfig> = {
 };
 
 export interface CreditPack {
-  key: "small" | "large";
+  key: "single" | "pack20";
   credits: number;
   priceLabel: string;
   priceEnv: string;
 }
 
 export const CREDIT_PACKS: CreditPack[] = [
-  { key: "small", credits: 50, priceLabel: "$4.99", priceEnv: "STRIPE_PRICE_CREDITS_SMALL" },
-  { key: "large", credits: 250, priceLabel: "$19.99", priceEnv: "STRIPE_PRICE_CREDITS_LARGE" },
+  { key: "single", credits: 1, priceLabel: "£5", priceEnv: "STRIPE_PRICE_CREDIT_SINGLE" },
+  { key: "pack20", credits: 20, priceLabel: "£88", priceEnv: "STRIPE_PRICE_CREDIT_PACK20" },
 ];
 
-export const SIGNUP_BONUS_CREDITS = 10;
+export const SIGNUP_BONUS_CREDITS = 3;

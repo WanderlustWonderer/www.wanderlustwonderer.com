@@ -62,6 +62,7 @@ export async function ensureCompanionProfile(
     profile_id: userId,
     delta: SIGNUP_BONUS_CREDITS,
     reason: "signup_bonus",
+    pot: "purchased",
   });
 
   return created as CompanionProfile;
