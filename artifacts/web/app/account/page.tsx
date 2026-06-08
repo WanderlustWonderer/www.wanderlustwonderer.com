@@ -174,9 +174,11 @@ export default async function AccountPage() {
                 <li key={b.id} className="flex items-center justify-between py-3 text-sm">
                   <div>
                     <p className="font-medium">{b.products?.name ?? "Session"}</p>
-                    <p className="opacity-60">{b.scheduled_at ? new Date(b.scheduled_at).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Time to be confirmed"}</p>
+                    <p className="opacity-60">{b.scheduled_at ? new Date(b.scheduled_at).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Paid — not yet scheduled"}</p>
                   </div>
-                  {b.meeting_url ? (
+                  {!b.scheduled_at ? (
+                    <Link href="/book" className="rounded-full bg-amber-500 px-4 py-1.5 text-xs font-medium text-black hover:bg-amber-400">Schedule a time</Link>
+                  ) : b.meeting_url ? (
                     <a href={b.meeting_url} className="rounded-full bg-amber-500 px-4 py-1.5 text-xs font-medium text-black hover:bg-amber-400">Join</a>
                   ) : (
                     <span className="text-xs uppercase tracking-wide opacity-50">{b.status}</span>
