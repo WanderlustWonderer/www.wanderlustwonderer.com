@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { reconcileLegacyMember } from "@/lib/stripe/reconcile";
 import { balances } from "@/lib/wallet/ledger";
+import { WalletHistory } from "@/components/wallet-history";
 import { CREDIT_PACKS } from "@/config/creator";
 import { CheckoutButton } from "@/components/companion/CheckoutButton";
 import { SiteNav } from "@/components/site-nav";
@@ -206,23 +207,7 @@ export default async function AccountPage() {
         {/* History */}
         <section className="mt-8 rounded-2xl border border-neutral-700 p-8">
           <h2 className="text-lg font-semibold">Wallet history</h2>
-          {ledger && ledger.length > 0 ? (
-            <ul className="mt-4 divide-y divide-neutral-800">
-              {ledger.map((row, i) => (
-                <li key={i} className="flex items-center justify-between py-3 text-sm">
-                  <div>
-                    <p className="font-medium">{LEDGER_LABELS[row.reason] ?? row.reason}</p>
-                    <p className="text-xs opacity-50">{formatDate(row.created_at)}</p>
-                  </div>
-                  <span className={row.delta >= 0 ? "text-emerald-400" : "text-neutral-400"}>
-                    {row.delta >= 0 ? `+${row.delta}` : row.delta}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-3 text-sm opacity-50">No activity yet.</p>
-          )}
+          <WalletHistory rows={(ledger ?? []).map((row) => ({ label: LEDGER_LABELS[row.reason] ?? row.reason, delta: row.delta, created_at: row.created_at }))} />
         </section>
       </main>
       <SiteFooter />
