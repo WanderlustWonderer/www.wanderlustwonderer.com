@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isAdmin } from "@/lib/admin/guard";
+import { ensureWebImage } from "@/lib/server/heic";
 
 export const runtime = "nodejs";
 
@@ -33,11 +34,16 @@ export async function POST(req: Request) {
   let pos = 0;
   for (const file of files) {
     const isVideo = (file.type || "").startsWith("video");
-    const ext = (file.name.split(".").pop() || (isVideo ? "mp4" : "jpg")).toLowerCase();
+    let buf = Buffer.from(await file.arrayBuffer());
+    let ext = (file.name.split(".").pop() || (isVideo ? "mp4" : "jpg")).toLowerCase();
+    let contentType = file.type || (isVideo ? "video/mp4" : "image/jpeg");
+    if (!isVideo) {
+      const conv = await ensureWebImage(file, buf);
+      buf = conv.buffer; ext = conv.ext; contentType = conv.contentType;
+    }
     const path = `${item.id}/${crypto.randomUUID()}.${ext}`;
-    const buf = Buffer.from(await file.arrayBuffer());
     const { error: upErr } = await admin.storage.from("portal-content").upload(path, buf, {
-      contentType: file.type || (isVideo ? "video/mp4" : "image/jpeg"), upsert: false,
+      contentType, upsert: false,
     });
     if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
     await admin.from("content_media").insert({

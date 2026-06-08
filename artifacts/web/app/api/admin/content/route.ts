@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isAdmin } from "@/lib/admin/guard";
+import { ensureWebImage } from "@/lib/server/heic";
 
 export const runtime = "nodejs";
 
@@ -29,11 +30,16 @@ export async function POST(req: Request) {
   const { data: conv } = await admin.from("conversations").select("id, profile_id").eq("id", conversationId).maybeSingle();
   if (!conv) return NextResponse.json({ error: "no_conversation" }, { status: 404 });
 
-  const ext = (file.name.split(".").pop() || (kind === "video" ? "mp4" : "jpg")).toLowerCase();
+  let buffer = Buffer.from(await file.arrayBuffer());
+  let ext = (file.name.split(".").pop() || (kind === "video" ? "mp4" : "jpg")).toLowerCase();
+  let contentType = file.type || (kind === "video" ? "video/mp4" : "image/jpeg");
+  if (kind !== "video") {
+    const conv = await ensureWebImage(file, buffer);
+    buffer = conv.buffer; ext = conv.ext; contentType = conv.contentType;
+  }
   const path = `${conv.profile_id}/${crypto.randomUUID()}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
   const { error: upErr } = await admin.storage.from("chat-media").upload(path, buffer, {
-    contentType: file.type || (kind === "video" ? "video/mp4" : "image/jpeg"),
+    contentType,
     upsert: false,
   });
   if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });

@@ -35,15 +35,21 @@ function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
 
 export async function toUploadable(file: File): Promise<File> {
   if (!isHeic(file)) return file;
-  const heic2any = await withTimeout(loadHeic2Any(), 20000, "Image converter timed out loading.");
-  const out = await withTimeout(
-    heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 }),
-    60000,
-    `Could not convert "${file.name}" \u2014 try saving it as JPEG and re-uploading.`,
-  );
-  const blob: Blob = Array.isArray(out) ? out[0] : out;
-  const name = file.name.replace(/\.(heic|heif)$/i, "") + ".jpg";
-  return new File([blob], name, { type: "image/jpeg" });
+  try {
+    const heic2any = await withTimeout(loadHeic2Any(), 20000, "loader");
+    const out = await withTimeout(
+      heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 }),
+      60000,
+      "convert",
+    );
+    const blob: Blob = Array.isArray(out) ? out[0] : out;
+    const name = file.name.replace(/\.(heic|heif)$/i, "") + ".jpg";
+    return new File([blob], name, { type: "image/jpeg" });
+  } catch {
+    // Browser couldn't convert this HEIF variant; upload the original and let
+    // the server convert it reliably with libheif.
+    return file;
+  }
 }
 
 export async function allUploadable(files: File[]): Promise<File[]> {
