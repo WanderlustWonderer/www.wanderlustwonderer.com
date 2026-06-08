@@ -13,7 +13,7 @@ function loadHeic2Any(): Promise<any> {
       const s = document.createElement("script");
       s.src = "https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js";
       s.onload = () => resolve((window as any).heic2any);
-      s.onerror = () => reject(new Error("heic2any failed to load"));
+      s.onerror = () => { loader = null; reject(new Error("Could not load the image converter (check your connection).")); };
       document.head.appendChild(s);
     });
   }
@@ -26,15 +26,28 @@ function isHeic(file: File): boolean {
   return t.includes("heic") || t.includes("heif") || n.endsWith(".heic") || n.endsWith(".heif");
 }
 
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(label)), ms)),
+  ]);
+}
+
 export async function toUploadable(file: File): Promise<File> {
   if (!isHeic(file)) return file;
-  const heic2any = await loadHeic2Any();
-  const out = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
+  const heic2any = await withTimeout(loadHeic2Any(), 20000, "Image converter timed out loading.");
+  const out = await withTimeout(
+    heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 }),
+    60000,
+    `Could not convert "${file.name}" \u2014 try saving it as JPEG and re-uploading.`,
+  );
   const blob: Blob = Array.isArray(out) ? out[0] : out;
   const name = file.name.replace(/\.(heic|heif)$/i, "") + ".jpg";
   return new File([blob], name, { type: "image/jpeg" });
 }
 
 export async function allUploadable(files: File[]): Promise<File[]> {
-  return Promise.all(files.map(toUploadable));
+  const result: File[] = [];
+  for (const f of files) result.push(await toUploadable(f));
+  return result;
 }

@@ -33,7 +33,9 @@ function Thread({ conv }: { conv: Conv }) {
   async function sendMedia() {
     if (!file || price <= 0) return;
     setBusy(true);
-    const prepared = await toUploadable(file);
+    let prepared: File;
+    try { prepared = await toUploadable(file); }
+    catch (e) { alert(e instanceof Error ? e.message : "Could not prepare the file."); setBusy(false); return; }
     const fd = new FormData();
     fd.append("file", prepared); fd.append("conversationId", conv.id); fd.append("kind", kind);
     fd.append("pricePence", String(Math.round(price * 100))); fd.append("caption", caption);

@@ -15,15 +15,27 @@ export function ContentManager({ items }: { items: Item[] }) {
 
   async function upload() {
     if (!title || !files || files.length === 0) { setMsg("Add a title and at least one file."); return; }
+    const list = Array.from(files);
+    const isVideoSel = (list[0].type || "").startsWith("video");
+    if (!isVideoSel && list.length > 5) { setMsg("You can upload up to 5 photos at a time."); return; }
     setBusy(true); setMsg(null);
-    const fd = new FormData();
-    fd.append("title", title); fd.append("caption", caption); fd.append("minTier", minTier);
-    const prepared = await allUploadable(Array.from(files));
-    const isVideo = (prepared[0].type || "").startsWith("video");
-    fd.append("contentType", isVideo ? "video" : (prepared.length > 1 ? "gallery" : "post"));
-    for (const f of prepared) fd.append("files", f);
-    const res = await fetch("/api/admin/content-item", { method: "POST", body: fd });
-    if (res.ok) window.location.reload(); else { const d = await res.json(); setMsg(d.error ?? "Upload failed"); setBusy(false); }
+    try {
+      const hasHeic = list.some((f) => /heic|heif/i.test(f.type) || /\.(heic|heif)$/i.test(f.name));
+      if (hasHeic) setMsg("Converting iPhone photo\u2026");
+      const prepared = await allUploadable(list);
+      setMsg("Uploading\u2026");
+      const fd = new FormData();
+      fd.append("title", title); fd.append("caption", caption); fd.append("minTier", minTier);
+      const isVideo = (prepared[0].type || "").startsWith("video");
+      fd.append("contentType", isVideo ? "video" : (prepared.length > 1 ? "gallery" : "post"));
+      for (const f of prepared) fd.append("files", f);
+      const res = await fetch("/api/admin/content-item", { method: "POST", body: fd });
+      if (res.ok) { window.location.reload(); return; }
+      const d = await res.json().catch(() => ({}));
+      setMsg(d.error ?? "Upload failed."); setBusy(false);
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Upload failed."); setBusy(false);
+    }
   }
   async function del(id: string) {
     if (!confirm("Delete this content?")) return;
@@ -44,11 +56,11 @@ export function ContentManager({ items }: { items: Item[] }) {
             <option value="all_access">All Access only</option>
           </select>
           <input value={caption} onChange={(e)=>setCaption(e.target.value)} placeholder="Caption (optional)" className="rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 sm:col-span-2" />
-          <input type="file" multiple accept="image/*,video/*" onChange={(e)=>setFiles(e.target.files)} className="text-xs text-neutral-300 sm:col-span-2" />
+          <input type="file" multiple accept="image/*,video/*" onChange={(e)=>{ const f=e.target.files; if(f && Array.from(f).filter(x=>!(x.type||"").startsWith("video")).length>5){ setMsg("You can upload up to 5 photos at a time."); } else { setMsg(null); } setFiles(f); }} className="text-xs text-neutral-300 sm:col-span-2" />
         </div>
-        <button onClick={upload} disabled={busy} className="mt-3 rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-black hover:bg-amber-400 disabled:opacity-40">{busy?"Uploading…":"Publish content"}</button>
-        {msg && <p className="mt-2 text-xs text-red-400">{msg}</p>}
-        <p className="mt-2 text-xs text-neutral-500">Photos = gallery, single video = video. Visible to the selected tier and above for 4 weeks, then moves to the Vault automatically.</p>
+        <button onClick={upload} disabled={busy} className="mt-3 rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-black hover:bg-amber-400 disabled:opacity-40">{busy?(msg ?? "Uploading\u2026"):"Publish content"}</button>
+        {msg && !busy && <p className="mt-2 text-xs text-red-400">{msg}</p>}
+        <p className="mt-2 text-xs text-neutral-500">Up to 5 photos (or one video) per upload. iPhone HEIC photos convert automatically. Visible to the selected tier and above for 4 weeks, then moves to the Vault automatically.</p>
       </div>
 
       <div>
