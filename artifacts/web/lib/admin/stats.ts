@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getStripe } from "@/lib/companion/stripe";
+import { isAdmin } from "@/lib/admin/guard";
 
 const TIER_MONTHLY_GBP: Record<string, number> = {
   the_gallery: 55,
@@ -96,8 +97,9 @@ async function loadStripeSubscriptions(s: ReturnType<typeof getStripe>): Promise
   // Consolidate by person (email). Members often sign up to one tier then
   // upgrade, leaving several subscription rows; we want ONE row per person.
   const isActive = (st: string) => ["active", "trialing", "past_due"].includes(st);
+  const visible = out.filter((r) => !isAdmin(r.email)); // hide owner/test accounts
   const byEmail = new Map<string, StripeSubRow[]>();
-  for (const r of out) {
+  for (const r of visible) {
     const key = (r.email || r.customerId || r.subId).toLowerCase();
     const arr = byEmail.get(key) ?? [];
     arr.push(r);
