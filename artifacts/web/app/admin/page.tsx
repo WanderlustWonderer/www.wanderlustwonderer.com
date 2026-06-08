@@ -59,7 +59,7 @@ export default async function AdminPage() {
     (convs ?? []).map(async (c) => {
       const { data: msgs } = await admin
         .from("chat_messages")
-        .select("id, role, content, kind, status, media_kind, locked, price_pence, created_at")
+        .select("id, role, content, kind, status, media_kind, locked, price_pence, created_at, read_at")
         .eq("conversation_id", c.id)
         .order("created_at", { ascending: true })
         .limit(500);

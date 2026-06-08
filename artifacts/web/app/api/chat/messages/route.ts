@@ -18,6 +18,15 @@ export async function GET(req: Request) {
   const { data: conv } = await admin.from("conversations").select("id").eq("id", conversationId).eq("profile_id", user.id).maybeSingle();
   if (!conv) return NextResponse.json({ messages: [] });
 
+  // Fan is viewing this thread — mark the creator's messages as read.
+  await admin
+    .from("chat_messages")
+    .update({ read_at: new Date().toISOString() })
+    .eq("conversation_id", conversationId)
+    .eq("status", "sent")
+    .neq("role", "fan")
+    .is("read_at", null);
+
   const { data } = await admin
     .from("chat_messages")
     .select("id, role, content, kind, media_kind, media_path, locked, price_pence, caption")

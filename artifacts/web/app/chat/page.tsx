@@ -33,6 +33,14 @@ export default async function ChatPage() {
 
   let initialMessages: ChatMessage[] = [];
   if (conversation) {
+    // The fan is now viewing — mark the creator's sent messages as read (powers her read receipts).
+    await admin
+      .from("chat_messages")
+      .update({ read_at: new Date().toISOString() })
+      .eq("conversation_id", conversation.id)
+      .eq("status", "sent")
+      .neq("role", "fan")
+      .is("read_at", null);
     const { data } = await admin
       .from("chat_messages")
       .select("id, role, content, kind, media_kind, media_path, locked, price_pence, caption")

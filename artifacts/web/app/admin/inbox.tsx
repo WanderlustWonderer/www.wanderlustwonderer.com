@@ -5,7 +5,7 @@ import { toUploadable } from "@/components/heic-convert";
 
 function threadSlug(email: string): string { return (email || "").toLowerCase().replace(/[^a-z0-9]+/g, "-"); }
 
-interface Msg { id: string; role: string; content: string; kind: string; status: string; media_kind?: string | null; locked?: boolean; price_pence?: number | null; created_at?: string; }
+interface Msg { id: string; role: string; content: string; kind: string; status: string; media_kind?: string | null; locked?: boolean; price_pence?: number | null; created_at?: string; read_at?: string | null; }
 interface Conv {
   id: string; email: string; messages: Msg[];
   latestDraftId: string | null; latestDraft: string | null;
@@ -19,6 +19,19 @@ function waitingSince(iso: string | null | undefined): string {
   const hrs = Math.round(mins / 60);
   if (hrs < 24) return `${hrs}h waiting`;
   return `${Math.round(hrs / 24)}d waiting`;
+}
+
+/** WhatsApp-style receipts on the creator's own messages: 1 grey tick = delivered, 2 blue ticks = read by the fan. */
+function Ticks({ read }: { read: boolean }) {
+  return (
+    <span
+      title={read ? "Read" : "Delivered"}
+      aria-label={read ? "Read" : "Delivered"}
+      className={`ml-1 inline-flex select-none align-middle text-[11px] leading-none ${read ? "text-sky-400" : "text-neutral-500"}`}
+    >
+      {read ? "\u2713\u2713" : "\u2713"}
+    </span>
+  );
 }
 
 export function AdminInbox({ newMessages, allThreads }: { newMessages: Conv[]; allThreads: Conv[] }) {
@@ -108,6 +121,7 @@ function Thread({ conv, defaultOpen = false, highlight = false }: { conv: Conv; 
             <div key={m.id} className={m.role === "fan" ? "text-right" : "text-left"}>
               <span className={`inline-block max-w-[80%] rounded-2xl px-3 py-2 text-sm ${m.role === "fan" ? "bg-amber-500/20" : "bg-neutral-800"}`}>
                 {m.kind === "media" ? `[${m.media_kind} · ${m.locked ? "locked £" + ((m.price_pence ?? 0) / 100).toFixed(2) : "unlocked"}] ${m.content}` : m.content}
+                {m.role !== "fan" && <Ticks read={!!m.read_at} />}
               </span>
             </div>
           ))}
