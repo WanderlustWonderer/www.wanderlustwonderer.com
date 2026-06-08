@@ -27,7 +27,9 @@ function verify(secret: string, headers: Headers, body: string): boolean {
 export async function POST(req: Request) {
   const body = await req.text();
   const secret = process.env.RESEND_WEBHOOK_SECRET;
-  if (secret && !verify(secret, req.headers, body)) {
+  // Fail closed: never process unsigned/unverified webhook events.
+  if (!secret) return NextResponse.json({ error: "not_configured" }, { status: 503 });
+  if (!verify(secret, req.headers, body)) {
     return NextResponse.json({ error: "bad_signature" }, { status: 401 });
   }
 
