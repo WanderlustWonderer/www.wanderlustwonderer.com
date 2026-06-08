@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 const TIERS = [
   {
     key: "the_gallery",
+    image: "https://i0.wp.com/wanderlustwonderer.com/wp-content/uploads/2026/04/WhatsApp-Image-2026-04-04-at-17.46.25.jpeg?resize=880%2C1024&ssl=1",
     name: "The Gallery",
     subtitle: "The Lunar Rhythm",
     tagline: "The Heartbeat of the Journey",
@@ -26,6 +27,7 @@ const TIERS = [
   },
   {
     key: "private_world",
+    image: "https://i0.wp.com/wanderlustwonderer.com/wp-content/uploads/2026/04/IMG_2114.jpg?resize=683%2C1024&ssl=1",
     name: "Private World",
     subtitle: "The Venusian Mirror",
     tagline: "The Sanctuary of Beauty and Devotion",
@@ -43,6 +45,7 @@ const TIERS = [
   },
   {
     key: "all_access",
+    image: "https://i0.wp.com/wanderlustwonderer.com/wp-content/uploads/2026/04/IMG_2448.jpg?resize=819%2C1024&ssl=1",
     name: "All Access",
     subtitle: "The Solar Experience",
     tagline: "The Full Eclipse",
@@ -118,12 +121,16 @@ export default async function SubscribePage() {
           {TIERS.map((tier) => (
             <div
               key={tier.key}
-              className={`flex flex-col rounded-2xl border p-8 ${
+              className={`relative flex flex-col overflow-hidden rounded-2xl border p-8 ${
                 "featured" in tier && tier.featured
                   ? "border-amber-500/60 shadow-lg shadow-amber-500/10"
                   : "border-neutral-700"
               }`}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={tier.image} alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full object-cover object-top opacity-25" />
+              <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/65" />
+              <div className="relative z-10 flex flex-1 flex-col">
               <h2 className="text-xl font-semibold">{tier.name}</h2>
               <p className="text-sm text-amber-400/90">{tier.subtitle}</p>
               <p className="mt-1 text-sm italic opacity-60">{tier.tagline}</p>
@@ -160,6 +167,7 @@ export default async function SubscribePage() {
                     {tier.cta}
                   </Link>
                 )}
+              </div>
               </div>
             </div>
           ))}
