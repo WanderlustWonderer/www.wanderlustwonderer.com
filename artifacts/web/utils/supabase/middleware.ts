@@ -31,10 +31,10 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect all routes under /dashboard
+  // Protect the member area
   if (
     !user &&
-    request.nextUrl.pathname.startsWith("/dashboard")
+    request.nextUrl.pathname.startsWith("/account")
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -48,7 +48,7 @@ export async function updateSession(request: NextRequest) {
       request.nextUrl.pathname === "/signup")
   ) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/account";
     return NextResponse.redirect(url);
   }
 
