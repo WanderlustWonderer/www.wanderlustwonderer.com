@@ -18,7 +18,7 @@ export default async function CollectionPage() {
   // RLS: active products are publicly readable.
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, description, price, product_type')
+    .select('id, name, description, price, product_type, image_url')
     .eq('active', true)
     .order('price', { ascending: false })
 
@@ -37,8 +37,18 @@ export default async function CollectionPage() {
         {(products ?? []).map((product) => (
           <div
             key={product.id}
-            className="flex flex-col rounded-2xl border border-neutral-700 p-6"
+            className="flex flex-col overflow-hidden rounded-2xl border border-neutral-700"
           >
+            {product.image_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={product.image_url}
+                alt={product.name}
+                loading="lazy"
+                className="aspect-[3/4] w-full object-cover"
+              />
+            )}
+            <div className="flex flex-1 flex-col p-6">
             <div className="flex items-baseline justify-between gap-3">
               <h2 className="text-lg font-semibold">{product.name}</h2>
               <span className="whitespace-nowrap text-lg font-semibold text-amber-500">
@@ -59,6 +69,7 @@ export default async function CollectionPage() {
                 label="Claim"
                 featured={product.product_type === 'booking'}
               />
+            </div>
             </div>
           </div>
         ))}
