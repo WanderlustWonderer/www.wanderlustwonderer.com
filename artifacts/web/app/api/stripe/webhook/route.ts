@@ -10,6 +10,7 @@ import {
   type WebhookAction,
 } from "@/lib/companion/webhook-handlers";
 import { tierFromPriceId, creditsFromPriceId } from "@/lib/companion/stripe";
+import { claimSlot } from "@/lib/booking/slots";
 import { applyRenewal, grantPurchase } from "@/lib/wallet/ledger";
 import { PRICE_TO_TIER } from "@/lib/stripe/tiers";
 
@@ -50,7 +51,9 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;
-        if (session.metadata?.companion === "1") {
+        if (session.metadata?.booking === "1") {
+          await handleSlotBooking(session);
+        } else if (session.metadata?.companion === "1") {
           const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 });
           const credits = creditsFromPriceId(lineItems.data[0]?.price?.id);
           const actions = interpretCheckoutCompleted(
@@ -244,6 +247,64 @@ function membershipAdmin() {
     process.env.SUPABASE_SERVICE_ROLE_KEY as string,
     { auth: { persistSession: false, autoRefreshToken: false } }
   );
+}
+
+async function handleSlotBooking(session: Stripe.Checkout.Session) {
+  const admin = createAdminClient();
+  const slotId = session.metadata?.slot_id;
+  const productId = session.metadata?.product_id;
+  const userId = session.metadata?.user_id ?? session.client_reference_id;
+  if (!slotId || !productId || !userId) return;
+
+  // Idempotency: if a booking already exists for this slot, stop.
+  const { data: slotRow } = await admin
+    .from("availability_slots")
+    .select("status, booking_id, starts_at")
+    .eq("id", slotId)
+    .maybeSingle();
+  if (slotRow?.booking_id) return;
+
+  // Atomically claim the slot (open -> booked). If someone else won, refund.
+  const claimed = await claimSlot(admin, slotId);
+  if (!claimed) {
+    const pi = stringId(session.payment_intent);
+    if (pi) {
+      try {
+        await stripe.refunds.create({ payment_intent: pi });
+      } catch {
+        /* best effort */
+      }
+    }
+    return;
+  }
+
+  // Record the order, then the booking, then link them to the slot.
+  const { data: order } = await admin
+    .from("orders")
+    .insert({
+      user_id: userId,
+      product_id: productId,
+      stripe_payment_intent_id: stringId(session.payment_intent),
+      status: "paid",
+    })
+    .select("id")
+    .single();
+
+  const { data: booking } = await admin
+    .from("bookings")
+    .insert({
+      user_id: userId,
+      product_id: productId,
+      order_id: order?.id ?? null,
+      scheduled_at: claimed.starts_at,
+      status: "scheduled",
+    })
+    .select("id")
+    .single();
+
+  if (booking) {
+    await admin.from("availability_slots").update({ booking_id: booking.id }).eq("id", slotId);
+  }
 }
 
 function stringId(value: string | { id: string } | null | undefined): string | null {

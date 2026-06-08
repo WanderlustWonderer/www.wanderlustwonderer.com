@@ -4,6 +4,7 @@ const LINKS = [
   { href: "/muse", label: "THE MUSE" },
   { href: "/subscribe", label: "THE PORTAL" },
   { href: "/collection", label: "THE COLLECTION" },
+  { href: "/book", label: "BOOK" },
   { href: "/practice", label: "THE PRACTICE" },
   { href: "/tribute", label: "THE TRIBUTE" },
 ];

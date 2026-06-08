@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isAdmin } from "@/lib/admin/guard";
 import { loadAdminStats, type AccountRow } from "@/lib/admin/stats";
+import { SlotManager } from "./slot-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,22 @@ export default async function AdminPage() {
     })
   );
 
+  // Booking products, open slots, and upcoming bookings for the slot manager.
+  const { data: bookingProducts } = await admin
+    .from("products").select("id, name").eq("product_type", "booking").eq("active", true).order("price");
+  const { data: openSlotRows } = await admin
+    .from("availability_slots")
+    .select("id, starts_at, products(name)")
+    .eq("status", "open").gt("starts_at", new Date().toISOString()).order("starts_at");
+  const openSlots = (openSlotRows ?? []).map((r: any) => ({ id: r.id, starts_at: r.starts_at, product_name: r.products?.name ?? "Session" }));
+  const { data: bookingRows } = await admin
+    .from("bookings")
+    .select("id, scheduled_at, meeting_url, status, products(name), profiles(email)")
+    .order("scheduled_at", { ascending: true });
+  const upcomingBookings = (bookingRows ?? [])
+    .filter((b: any) => b.scheduled_at)
+    .map((b: any) => ({ id: b.id, scheduled_at: b.scheduled_at, meeting_url: b.meeting_url, status: b.status, product_name: b.products?.name ?? "Session", email: b.profiles?.email ?? "member" }));
+
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <header className="border-b border-neutral-800 bg-black">
@@ -98,6 +115,14 @@ export default async function AdminPage() {
             All accounts ({stats.totalAccounts})
           </h2>
           <Table rows={stats.accounts} />
+        </section>
+
+        {/* Bookings & availability */}
+        <section>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">
+            Bookings &amp; availability
+          </h2>
+          <SlotManager products={bookingProducts ?? []} openSlots={openSlots} bookings={upcomingBookings} />
         </section>
 
         {/* Conversations */}

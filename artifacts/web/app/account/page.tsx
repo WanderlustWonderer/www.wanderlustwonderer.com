@@ -83,7 +83,7 @@ export default async function AccountPage() {
     ["active", "trialing"].includes(profile.subscription_status);
   const tier = isMember ? (profile?.membership_tier ?? null) : null;
 
-  const [wallet, { data: ledger }] = await Promise.all([
+  const [wallet, { data: ledger }, { data: bookingRows }] = await Promise.all([
     balances(admin, user.id),
     admin
       .from("credit_ledger")
@@ -91,7 +91,13 @@ export default async function AccountPage() {
       .eq("profile_id", user.id)
       .order("created_at", { ascending: false })
       .limit(50),
+    admin
+      .from("bookings")
+      .select("id, scheduled_at, meeting_url, status, products(name)")
+      .eq("user_id", user.id)
+      .order("scheduled_at", { ascending: true }),
   ]);
+  const bookings = (bookingRows ?? []) as Array<{ id: string; scheduled_at: string | null; meeting_url: string | null; status: string; products: { name: string } | null }>;
 
   return (
     <div className="bg-black text-neutral-100 min-h-screen">
@@ -154,6 +160,33 @@ export default async function AccountPage() {
               Open chat
             </Link>
           </div>
+        </section>
+
+        {/* Bookings */}
+        <section className="mt-8 rounded-2xl border border-neutral-700 p-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Your sessions</h2>
+            <Link href="/book" className="text-sm text-amber-500 hover:text-amber-400">Book a session →</Link>
+          </div>
+          {bookings.length > 0 ? (
+            <ul className="mt-4 divide-y divide-neutral-800">
+              {bookings.map((b) => (
+                <li key={b.id} className="flex items-center justify-between py-3 text-sm">
+                  <div>
+                    <p className="font-medium">{b.products?.name ?? "Session"}</p>
+                    <p className="opacity-60">{b.scheduled_at ? new Date(b.scheduled_at).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Time to be confirmed"}</p>
+                  </div>
+                  {b.meeting_url ? (
+                    <a href={b.meeting_url} className="rounded-full bg-amber-500 px-4 py-1.5 text-xs font-medium text-black hover:bg-amber-400">Join</a>
+                  ) : (
+                    <span className="text-xs uppercase tracking-wide opacity-50">{b.status}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm opacity-50">No sessions booked yet.</p>
+          )}
         </section>
 
         {/* History */}
