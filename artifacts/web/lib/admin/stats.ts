@@ -87,13 +87,36 @@ async function loadStripeSubscriptions(s: ReturnType<typeof getStripe>): Promise
     startingAfter = res.data[res.data.length - 1].id;
   }
 
+  // Consolidate by person (email). Members often sign up to one tier then
+  // upgrade, leaving several subscription rows; we want ONE row per person.
   const isActive = (st: string) => ["active", "trialing", "past_due"].includes(st);
-  const isCanceled = (st: string) => ["canceled", "unpaid", "incomplete_expired"].includes(st);
-  const active = out.filter((r) => isActive(r.status)).sort((a, b) => b.amountGbp - a.amountGbp);
-  const canceled = out
-    .filter((r) => isCanceled(r.status))
-    .sort((a, b) => (b.canceledAt ?? "").localeCompare(a.canceledAt ?? ""));
-  const mrrGbp = out
+  const byEmail = new Map<string, StripeSubRow[]>();
+  for (const r of out) {
+    const key = (r.email || r.customerId || r.subId).toLowerCase();
+    const arr = byEmail.get(key) ?? [];
+    arr.push(r);
+    byEmail.set(key, arr);
+  }
+
+  const active: StripeSubRow[] = [];
+  const canceled: StripeSubRow[] = [];
+  for (const subs of byEmail.values()) {
+    const actives = subs.filter((r) => isActive(r.status));
+    if (actives.length) {
+      // Current customer: show their highest active plan only.
+      active.push([...actives].sort((a, b) => b.amountGbp - a.amountGbp)[0]);
+    } else {
+      // Fully churned: one winback row = highest plan they ever held,
+      // stamped with their most recent cancellation and earliest signup.
+      const rep = { ...[...subs].sort((a, b) => b.amountGbp - a.amountGbp)[0] };
+      rep.canceledAt = subs.map((r) => r.canceledAt).filter(Boolean).sort().pop() ?? rep.canceledAt;
+      rep.created = subs.map((r) => r.created).filter(Boolean).sort()[0] ?? rep.created;
+      canceled.push(rep);
+    }
+  }
+  active.sort((a, b) => b.amountGbp - a.amountGbp);
+  canceled.sort((a, b) => String(b.canceledAt ?? "").localeCompare(String(a.canceledAt ?? "")));
+  const mrrGbp = active
     .filter((r) => ["active", "trialing"].includes(r.status))
     .reduce((sum, r) => sum + (r.interval === "year" ? r.amountGbp / 12 : r.amountGbp), 0);
   return { active, canceled, mrrGbp };
