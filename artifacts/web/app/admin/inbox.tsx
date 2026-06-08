@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toUploadable } from "@/components/heic-convert";
 
 interface Msg { id: string; role: string; content: string; kind: string; status: string; media_kind?: string | null; locked?: boolean; price_pence?: number | null; }
 interface Conv { id: string; email: string; messages: Msg[]; latestDraftId: string | null; latestDraft: string | null; }
@@ -32,8 +33,9 @@ function Thread({ conv }: { conv: Conv }) {
   async function sendMedia() {
     if (!file || price <= 0) return;
     setBusy(true);
+    const prepared = await toUploadable(file);
     const fd = new FormData();
-    fd.append("file", file); fd.append("conversationId", conv.id); fd.append("kind", kind);
+    fd.append("file", prepared); fd.append("conversationId", conv.id); fd.append("kind", kind);
     fd.append("pricePence", String(Math.round(price * 100))); fd.append("caption", caption);
     await fetch("/api/admin/content", { method: "POST", body: fd });
     window.location.reload();

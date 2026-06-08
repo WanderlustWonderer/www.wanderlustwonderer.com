@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { allUploadable } from "@/components/heic-convert";
 
 interface Item { id: string; title: string; min_tier: string; content_type: string; published_at: string | null; live: boolean; }
 
@@ -17,9 +18,10 @@ export function ContentManager({ items }: { items: Item[] }) {
     setBusy(true); setMsg(null);
     const fd = new FormData();
     fd.append("title", title); fd.append("caption", caption); fd.append("minTier", minTier);
-    const isVideo = (files[0].type || "").startsWith("video");
-    fd.append("contentType", isVideo ? "video" : (files.length > 1 ? "gallery" : "post"));
-    for (const f of Array.from(files)) fd.append("files", f);
+    const prepared = await allUploadable(Array.from(files));
+    const isVideo = (prepared[0].type || "").startsWith("video");
+    fd.append("contentType", isVideo ? "video" : (prepared.length > 1 ? "gallery" : "post"));
+    for (const f of prepared) fd.append("files", f);
     const res = await fetch("/api/admin/content-item", { method: "POST", body: fd });
     if (res.ok) window.location.reload(); else { const d = await res.json(); setMsg(d.error ?? "Upload failed"); setBusy(false); }
   }
