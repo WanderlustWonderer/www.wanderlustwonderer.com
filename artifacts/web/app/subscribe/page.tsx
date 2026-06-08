@@ -107,6 +107,14 @@ export default async function SubscribePage() {
           <p className="mt-3 text-lg italic text-amber-400/90">Choose Your Path</p>
         </header>
 
+        {!isMember && (
+          <div className="mb-10 rounded-2xl border border-neutral-700 bg-neutral-900/60 p-5 text-center">
+            <p className="text-sm text-neutral-300">
+              Just want to look around? <Link href="/signup" className="font-medium text-amber-400 underline">Create a free account</Link> — no card needed. Step inside, then upgrade whenever you're ready.
+            </p>
+          </div>
+        )}
+
         {isMember && (
           <div className="mb-10 rounded-xl border border-amber-500/40 bg-amber-500/10 p-5 text-center">
             <p className="font-medium">
