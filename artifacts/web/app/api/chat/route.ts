@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { ensureCompanionProfile } from "@/lib/companion/profile";
-import { spendCredit, balances } from "@/lib/wallet/ledger";
+import { spendCredit, refundCredit, balances } from "@/lib/wallet/ledger";
 import { buildDraftPrompt, selectHistory, type HistoryMessage } from "@/lib/companion/prompt";
 import { generateReply } from "@/lib/companion/llm";
 
@@ -46,14 +46,21 @@ export async function POST(req: Request) {
   }
   if (!conversationId) {
     const { data: conv, error } = await admin.from("conversations").insert({ profile_id: user.id, creator_id: profile.creator_id }).select("id").single();
-    if (error) return NextResponse.json({ error: "conversation_failed" }, { status: 500 });
+    if (error) {
+      await refundCredit(admin, user.id, spent);
+      return NextResponse.json({ error: "conversation_failed" }, { status: 500 });
+    }
     conversationId = conv.id;
   }
 
   // Store the fan's message (delivered to the creator's inbox).
-  await admin.from("chat_messages").insert({
+  const { error: fanErr } = await admin.from("chat_messages").insert({
     conversation_id: conversationId, profile_id: user.id, role: "fan", content: message, status: "sent", kind: "text",
   });
+  if (fanErr) {
+    await refundCredit(admin, user.id, spent);
+    return NextResponse.json({ error: "persist_failed" }, { status: 500 });
+  }
 
   // Generate an AI DRAFT reply for the creator to review (best-effort; never shown to the fan).
   try {
