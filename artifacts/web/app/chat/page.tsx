@@ -6,6 +6,8 @@ import { balances } from "@/lib/wallet/ledger";
 import { CREATOR } from "@/config/creator";
 
 export const dynamic = "force-dynamic";
+export const metadata = { robots: { index: false, follow: false } };
+
 
 export default async function ChatPage() {
   const supabase = await createClient();
@@ -42,7 +44,7 @@ export default async function ChatPage() {
       (data ?? []).map(async (m: any) => {
         let signedUrl: string | null = null;
         if (m.kind === "media" && !m.locked && m.media_path) {
-          const { data: signed } = await admin.storage.from("chat-media").createSignedUrl(m.media_path, 3600);
+          const { data: signed } = await admin.storage.from("chat-media").createSignedUrl(m.media_path, 600);
           signedUrl = signed?.signedUrl ?? null;
         }
         return {
@@ -53,5 +55,5 @@ export default async function ChatPage() {
     );
   }
 
-  return <ChatView initialMessages={initialMessages} conversationId={conversation?.id ?? null} initialBalance={walletBalances.total} />;
+  return <ChatView initialMessages={initialMessages} conversationId={conversation?.id ?? null} initialBalance={walletBalances.total} viewerLabel={user.email ?? "you"} />;
 }

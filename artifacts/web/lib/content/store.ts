@@ -32,7 +32,7 @@ export async function getViewerEntitlements(admin: SupabaseClient, userId: strin
 }
 
 async function sign(admin: SupabaseClient, path: string): Promise<string | null> {
-  const { data } = await admin.storage.from("portal-content").createSignedUrl(path, 3600);
+  const { data } = await admin.storage.from("portal-content").createSignedUrl(path, 600);
   return data?.signedUrl ?? null;
 }
 

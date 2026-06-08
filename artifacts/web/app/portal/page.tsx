@@ -3,10 +3,13 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { getViewerEntitlements, loadViewableFeed } from "@/lib/content/store";
+import { ProtectedMedia } from "@/components/protected-media";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 
 export const dynamic = "force-dynamic";
+export const metadata = { robots: { index: false, follow: false } };
+
 
 const TIER_NAME: Record<string, string> = { the_gallery: "The Gallery", private_world: "Private World", all_access: "All Access" };
 
@@ -53,9 +56,7 @@ export default async function PortalPage() {
                 </div>
                 <div className="mt-3 grid gap-1 p-2 sm:grid-cols-2">
                   {item.media.map((m, i) => (
-                    m.kind === "video"
-                      ? <video key={i} src={m.url} controls className="w-full rounded-lg" />
-                      : <img key={i} src={m.url} alt={item.title} className="w-full rounded-lg object-cover" />
+                    <ProtectedMedia key={i} kind={m.kind} url={m.url} alt={item.title} watermark={user.email ?? "members only"} />
                   ))}
                 </div>
               </article>

@@ -29,7 +29,7 @@ export async function GET(req: Request) {
   const messages = await Promise.all((data ?? []).map(async (m: any) => {
     let signedUrl: string | null = null;
     if (m.kind === "media" && !m.locked && m.media_path) {
-      const { data: signed } = await admin.storage.from("chat-media").createSignedUrl(m.media_path, 3600);
+      const { data: signed } = await admin.storage.from("chat-media").createSignedUrl(m.media_path, 600);
       signedUrl = signed?.signedUrl ?? null;
     }
     return { id: m.id, role: m.role, content: m.content, kind: m.kind, media_kind: m.media_kind, locked: m.locked, price_pence: m.price_pence, caption: m.caption, signedUrl };

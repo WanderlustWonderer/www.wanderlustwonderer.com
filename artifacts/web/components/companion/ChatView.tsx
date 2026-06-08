@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CREATOR } from "@/config/creator";
 import { createClient } from "@/utils/supabase/client";
+import { ProtectedMedia } from "@/components/protected-media";
 
 export interface ChatMessage {
   id: string;
@@ -22,8 +23,8 @@ function gbp(p: number) {
 }
 
 export function ChatView({
-  initialMessages, conversationId, initialBalance,
-}: { initialMessages: ChatMessage[]; conversationId: string | null; initialBalance: number; }) {
+  initialMessages, conversationId, initialBalance, viewerLabel,
+}: { initialMessages: ChatMessage[]; conversationId: string | null; initialBalance: number; viewerLabel: string; }) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [convId, setConvId] = useState(conversationId);
   const [balance, setBalance] = useState(initialBalance);
@@ -139,9 +140,7 @@ export function ChatView({
                     </div>
                   ) : m.signedUrl ? (
                     <div>
-                      {m.media_kind === "video"
-                        ? <video src={m.signedUrl} controls className="max-h-72 rounded-xl" />
-                        : <img src={m.signedUrl} alt={m.caption ?? "photo"} className="max-h-72 rounded-xl" />}
+                      <ProtectedMedia kind={m.media_kind ?? "photo"} url={m.signedUrl} alt={m.caption ?? "photo"} watermark={viewerLabel} />
                       {m.caption && <p className="mt-2 text-xs">{m.caption}</p>}
                     </div>
                   ) : <p>{m.content}</p>
