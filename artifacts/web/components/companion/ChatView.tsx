@@ -31,7 +31,7 @@ function gbp(p: number) {
 }
 
 export function ChatView({
-  initialMessages, conversationId, initialBalance, viewerLabel,
+  initialMessages, conversationId, initialBalance, viewerLabel, queue,
 }: { initialMessages: ChatMessage[]; conversationId: string | null; initialBalance: number; viewerLabel: string; queue?: QueueSummary; }) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [convId, setConvId] = useState(conversationId);
