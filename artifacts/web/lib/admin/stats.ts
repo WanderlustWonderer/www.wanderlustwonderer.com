@@ -20,10 +20,25 @@ export interface AccountRow {
   topup_count: number;
 }
 
+export interface StripeSubRow {
+  subId: string;
+  customerId: string;
+  email: string | null;
+  name: string | null;
+  product: string;
+  amountGbp: number;
+  interval: string;
+  status: string;
+  currentPeriodEnd: string | null;
+  created: string;
+  canceledAt: string | null;
+}
+
 export interface AdminStats {
   accounts: AccountRow[];
   totalAccounts: number;
   activeSubs: AccountRow[];
+  stripeSubs: { active: StripeSubRow[]; canceled: StripeSubRow[]; error?: string };
   mrrGbp: number;
   stripe: {
     availableGbp: number;
@@ -32,6 +47,56 @@ export interface AdminStats {
     chargeCount: number;
     error?: string;
   };
+}
+
+async function loadStripeSubscriptions(s: ReturnType<typeof getStripe>): Promise<{ active: StripeSubRow[]; canceled: StripeSubRow[]; mrrGbp: number }> {
+  const out: StripeSubRow[] = [];
+  let startingAfter: string | undefined;
+  // Paginate so every subscription (active + canceled) is captured.
+  for (let i = 0; i < 20; i++) {
+    const res: any = await s.subscriptions.list({
+      status: "all",
+      limit: 100,
+      expand: ["data.customer"],
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
+    });
+    for (const sub of res.data as any[]) {
+      const cust = sub.customer && typeof sub.customer === "object" ? sub.customer : null;
+      const item = sub.items?.data?.[0];
+      const price = item?.price;
+      const periodEnd = item?.current_period_end ?? sub.current_period_end ?? null;
+      out.push({
+        subId: sub.id,
+        customerId: typeof sub.customer === "string" ? sub.customer : cust?.id ?? "",
+        email: cust?.email ?? null,
+        name: cust?.name ?? null,
+        product: sub.description ?? price?.nickname ?? "Subscription",
+        amountGbp: (price?.unit_amount ?? 0) / 100,
+        interval: price?.recurring?.interval ?? "month",
+        status: sub.status,
+        currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+        created: new Date(sub.created * 1000).toISOString(),
+        canceledAt: sub.canceled_at
+          ? new Date(sub.canceled_at * 1000).toISOString()
+          : sub.ended_at
+          ? new Date(sub.ended_at * 1000).toISOString()
+          : null,
+      });
+    }
+    if (!res.has_more || res.data.length === 0) break;
+    startingAfter = res.data[res.data.length - 1].id;
+  }
+
+  const isActive = (st: string) => ["active", "trialing", "past_due"].includes(st);
+  const isCanceled = (st: string) => ["canceled", "unpaid", "incomplete_expired"].includes(st);
+  const active = out.filter((r) => isActive(r.status)).sort((a, b) => b.amountGbp - a.amountGbp);
+  const canceled = out
+    .filter((r) => isCanceled(r.status))
+    .sort((a, b) => (b.canceledAt ?? "").localeCompare(a.canceledAt ?? ""));
+  const mrrGbp = out
+    .filter((r) => ["active", "trialing"].includes(r.status))
+    .reduce((sum, r) => sum + (r.interval === "year" ? r.amountGbp / 12 : r.amountGbp), 0);
+  return { active, canceled, mrrGbp };
 }
 
 export async function loadAdminStats(admin: SupabaseClient): Promise<AdminStats> {
@@ -49,6 +114,12 @@ export async function loadAdminStats(admin: SupabaseClient): Promise<AdminStats>
     0
   );
 
+  let mrrGbpFinal = mrrGbp;
+  const stripeSubs: { active: StripeSubRow[]; canceled: StripeSubRow[]; error?: string } = {
+    active: [],
+    canceled: [],
+  };
+
   const stripe = {
     availableGbp: 0,
     pendingGbp: 0,
@@ -58,6 +129,14 @@ export async function loadAdminStats(admin: SupabaseClient): Promise<AdminStats>
   };
   try {
     const s = getStripe();
+    try {
+      const subs = await loadStripeSubscriptions(s);
+      stripeSubs.active = subs.active;
+      stripeSubs.canceled = subs.canceled;
+      if (subs.active.length > 0) mrrGbpFinal = subs.mrrGbp;
+    } catch (e) {
+      stripeSubs.error = e instanceof Error ? e.message : "Stripe subscriptions unavailable";
+    }
     const balance = await s.balance.retrieve();
     stripe.availableGbp =
       (balance.available.find((b) => b.currency === "gbp")?.amount ?? 0) / 100;
@@ -78,7 +157,8 @@ export async function loadAdminStats(admin: SupabaseClient): Promise<AdminStats>
     accounts,
     totalAccounts: accounts.length,
     activeSubs,
-    mrrGbp,
+    stripeSubs,
+    mrrGbp: mrrGbpFinal,
     stripe,
   };
 }

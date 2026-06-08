@@ -3,7 +3,8 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isAdmin } from "@/lib/admin/guard";
-import { loadAdminStats, type AccountRow } from "@/lib/admin/stats";
+import { loadAdminStats, type AccountRow, type StripeSubRow } from "@/lib/admin/stats";
+import { WinbackEmails } from "./winback-emails";
 import { SlotManager } from "./slot-manager";
 import { AdminInbox } from "./inbox";
 import { ContentManager } from "./content-manager";
@@ -46,30 +47,70 @@ export default async function AdminPage() {
     .from("conversations")
     .select("id, profile_id, created_at")
     .order("created_at", { ascending: false })
-    .limit(15);
+    .limit(500);
 
   const emailById = new Map(stats.accounts.map((a) => [a.id, a.email]));
-  const conversations = await Promise.all(
+
+  // Load every conversation's messages, then merge by ACCOUNT so each member is
+  // a single thread (a member may have multiple conversation rows).
+  const perConv = await Promise.all(
     (convs ?? []).map(async (c) => {
       const { data: msgs } = await admin
         .from("chat_messages")
         .select("id, role, content, kind, status, media_kind, locked, price_pence, created_at")
         .eq("conversation_id", c.id)
         .order("created_at", { ascending: true })
-        .limit(200);
+        .limit(500);
       const all = msgs ?? [];
-      const visible = all.filter((m: any) => m.status === "sent");
       const drafts = all.filter((m: any) => m.status === "draft");
       const lastDraft = drafts.length ? drafts[drafts.length - 1] : null;
-      return {
-        id: c.id,
-        email: emailById.get(c.profile_id) ?? "unknown",
-        messages: visible,
-        latestDraftId: lastDraft?.id ?? null,
-        latestDraft: lastDraft?.content ?? null,
-      };
+      const sent = all.filter((m: any) => m.status === "sent");
+      const lastAt = all.length ? all[all.length - 1].created_at : c.created_at;
+      return { convId: c.id, profileId: c.profile_id, sent, lastDraft, lastAt };
     })
   );
+
+  type Acct = {
+    id: string; email: string; messages: any[];
+    latestDraftId: string | null; latestDraft: string | null;
+    needsReply: boolean; oldestUnansweredAt: string | null; lastActivity: string;
+    _draftAt: string | null;
+  };
+  const byAccount = new Map<string, Acct>();
+  for (const o of perConv) {
+    const g = byAccount.get(o.profileId) ?? {
+      id: o.convId, email: emailById.get(o.profileId) ?? "unknown", messages: [],
+      latestDraftId: null, latestDraft: null, needsReply: false,
+      oldestUnansweredAt: null, lastActivity: "", _draftAt: null,
+    };
+    g.messages.push(...o.sent);
+    if (o.lastAt > g.lastActivity) { g.lastActivity = o.lastAt; if (!g.latestDraftId) g.id = o.convId; }
+    if (o.lastDraft && (!g._draftAt || o.lastDraft.created_at > g._draftAt)) {
+      g._draftAt = o.lastDraft.created_at;
+      g.latestDraftId = o.lastDraft.id;
+      g.latestDraft = o.lastDraft.content;
+      g.id = o.convId; // reply must target the conversation that holds the draft
+    }
+    byAccount.set(o.profileId, g);
+  }
+
+  const accounts = Array.from(byAccount.values()).map((g) => {
+    g.messages.sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+    let lastCreatorIdx = -1;
+    g.messages.forEach((m, i) => { if (m.role !== "fan") lastCreatorIdx = i; });
+    const trailingFan = g.messages.slice(lastCreatorIdx + 1).filter((m) => m.role === "fan");
+    g.oldestUnansweredAt = trailingFan.length ? trailingFan[0].created_at : null;
+    g.needsReply = !!g.oldestUnansweredAt || !!g.latestDraft;
+    return g;
+  });
+
+  // Reply queue: needs a reply, OLDEST waiting first. Everyone else by latest activity.
+  const newMessages = accounts
+    .filter((a) => a.needsReply)
+    .sort((a, b) => String(a.oldestUnansweredAt ?? a.lastActivity).localeCompare(String(b.oldestUnansweredAt ?? b.lastActivity)));
+  const allThreads = accounts
+    .filter((a) => a.messages.length > 0 || a.latestDraft)
+    .sort((a, b) => String(b.lastActivity).localeCompare(String(a.lastActivity)));
 
   // Booking products, open slots, and upcoming bookings for the slot manager.
   const { data: bookingProducts } = await admin
@@ -119,12 +160,24 @@ export default async function AdminPage() {
           )}
         </section>
 
-        {/* Active subscriptions */}
+        {/* Active subscriptions — live from Stripe (source of truth for billing) */}
         <section>
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">
-            Active subscriptions ({stats.activeSubs.length})
+            Active subscriptions ({stats.stripeSubs.active.length})
           </h2>
-          <Table rows={stats.activeSubs} />
+          <StripeTable rows={stats.stripeSubs.active} mode="active" />
+          {stats.stripeSubs.error && (
+            <p className="mt-2 text-xs text-amber-400">Stripe: {stats.stripeSubs.error}</p>
+          )}
+        </section>
+
+        {/* Cancelled subscribers — winback list */}
+        <section>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">
+            Cancelled subscribers · winback ({stats.stripeSubs.canceled.length})
+          </h2>
+          <WinbackEmails emails={Array.from(new Set(stats.stripeSubs.canceled.map((r) => r.email).filter((e): e is string => !!e)))} />
+          <StripeTable rows={stats.stripeSubs.canceled} mode="canceled" />
         </section>
 
         {/* All accounts */}
@@ -154,7 +207,7 @@ export default async function AdminPage() {
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">
             Messages
           </h2>
-          <AdminInbox conversations={conversations} />
+          <AdminInbox newMessages={newMessages} allThreads={allThreads} />
         </section>
 
       </main>
@@ -167,6 +220,44 @@ function Stat({ label, value, accent = false }: { label: string; value: string; 
     <div className={`rounded-xl border p-5 ${accent ? "border-amber-500/40 bg-amber-500/5" : "border-neutral-800 bg-neutral-900"}`}>
       <p className="text-xs text-neutral-500">{label}</p>
       <p className={`mt-1 text-2xl font-semibold ${accent ? "text-amber-400" : ""}`}>{value}</p>
+    </div>
+  );
+}
+
+function StripeTable({ rows, mode }: { rows: StripeSubRow[]; mode: "active" | "canceled" }) {
+  if (rows.length === 0) {
+    return <p className="text-sm text-neutral-500">{mode === "active" ? "No active Stripe subscriptions." : "No cancellations yet."}</p>;
+  }
+  return (
+    <div className="overflow-x-auto rounded-xl border border-neutral-800">
+      <table className="w-full text-sm">
+        <thead className="bg-neutral-900 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <tr>
+            <th className="px-4 py-3">Email</th>
+            <th className="px-4 py-3">Name</th>
+            <th className="px-4 py-3">Plan</th>
+            <th className="px-4 py-3">Amount</th>
+            <th className="px-4 py-3">Status</th>
+            <th className="px-4 py-3">{mode === "active" ? "Renews" : "Cancelled"}</th>
+            <th className="px-4 py-3">Since</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-neutral-800">
+          {rows.map((r) => (
+            <tr key={r.subId} className="hover:bg-neutral-900/50">
+              <td className="px-4 py-3">{r.email ?? "—"}</td>
+              <td className="px-4 py-3">{r.name ?? "—"}</td>
+              <td className="px-4 py-3">{r.product}</td>
+              <td className="px-4 py-3 font-medium text-amber-400">{gbp(r.amountGbp)}<span className="text-neutral-500">/{r.interval}</span></td>
+              <td className="px-4 py-3">
+                <span className={`rounded-full px-2 py-0.5 text-xs ${statusBadge(r.status)}`}>{r.status}</span>
+              </td>
+              <td className="px-4 py-3">{mode === "active" ? date(r.currentPeriodEnd) : date(r.canceledAt)}</td>
+              <td className="px-4 py-3 text-neutral-500">{date(r.created)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
