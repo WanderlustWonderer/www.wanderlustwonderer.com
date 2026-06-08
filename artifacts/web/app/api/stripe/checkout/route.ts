@@ -105,7 +105,7 @@ export async function POST(req: Request) {
   }
   if (isUpgrade && fromGallery) {
     // 15% off for Gallery members upgrading to a higher tier (forever coupon).
-    sessionParams.discounts = [{ coupon: process.env.STRIPE_UPGRADE_COUPON ?? 'GALLERY_UPGRADE_15' }]
+    sessionParams.discounts = [{ coupon: process.env.STRIPE_UPGRADE_COUPON ?? 'UPGRADE15_1MO' }]
   } else {
     sessionParams.allow_promotion_codes = true
   }
