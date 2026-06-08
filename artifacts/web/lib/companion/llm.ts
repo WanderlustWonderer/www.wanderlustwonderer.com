@@ -2,7 +2,7 @@ import "server-only";
 import type { HistoryMessage } from "./prompt";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
-const DEFAULT_MODEL = "claude-haiku-4-5";
+const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
 
 /**
  * Calls Anthropic's Messages API directly over HTTPS (no SDK dependency —

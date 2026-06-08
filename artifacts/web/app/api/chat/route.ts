@@ -100,7 +100,10 @@ export async function POST(req: Request) {
     console.error("LLM failure:", err);
     await refundCredit(admin, user.id, spentPot);
     await admin.from("chat_messages").delete().eq("id", fanMsg.id);
-    return NextResponse.json({ error: "llm_failed" }, { status: 502 });
+    return NextResponse.json(
+      { error: "llm_failed", detail: err instanceof Error ? err.message : String(err) },
+      { status: 502 }
+    );
   }
 
   await admin.from("chat_messages").insert({
