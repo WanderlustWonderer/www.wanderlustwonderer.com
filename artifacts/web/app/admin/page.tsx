@@ -5,6 +5,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { isAdmin } from "@/lib/admin/guard";
 import { loadAdminStats, type AccountRow } from "@/lib/admin/stats";
 import { SlotManager } from "./slot-manager";
+import { AdminInbox } from "./inbox";
 
 export const dynamic = "force-dynamic";
 
@@ -50,11 +51,21 @@ export default async function AdminPage() {
     (convs ?? []).map(async (c) => {
       const { data: msgs } = await admin
         .from("chat_messages")
-        .select("role, content, created_at")
+        .select("id, role, content, kind, status, media_kind, locked, price_pence, created_at")
         .eq("conversation_id", c.id)
         .order("created_at", { ascending: true })
-        .limit(100);
-      return { id: c.id, email: emailById.get(c.profile_id) ?? "unknown", messages: msgs ?? [] };
+        .limit(200);
+      const all = msgs ?? [];
+      const visible = all.filter((m: any) => m.status === "sent");
+      const drafts = all.filter((m: any) => m.status === "draft");
+      const lastDraft = drafts.length ? drafts[drafts.length - 1] : null;
+      return {
+        id: c.id,
+        email: emailById.get(c.profile_id) ?? "unknown",
+        messages: visible,
+        latestDraftId: lastDraft?.id ?? null,
+        latestDraft: lastDraft?.content ?? null,
+      };
     })
   );
 
@@ -125,32 +136,14 @@ export default async function AdminPage() {
           <SlotManager products={bookingProducts ?? []} openSlots={openSlots} bookings={upcomingBookings} />
         </section>
 
-        {/* Conversations */}
+        {/* Messages — review AI drafts, reply, send paid content */}
         <section>
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">
-            Recent conversations
+            Messages
           </h2>
-          {conversations.length === 0 && <p className="text-sm text-neutral-500">No conversations yet.</p>}
-          <div className="space-y-3">
-            {conversations.map((c) => (
-              <details key={c.id} className="rounded-xl border border-neutral-800 bg-neutral-900">
-                <summary className="cursor-pointer px-4 py-3 text-sm">
-                  <span className="font-medium">{c.email}</span>
-                  <span className="ml-3 text-neutral-500">{c.messages.length} messages</span>
-                </summary>
-                <div className="space-y-2 border-t border-neutral-800 px-4 py-3">
-                  {c.messages.map((m, i) => (
-                    <div key={i} className={m.role === "fan" ? "text-right" : "text-left"}>
-                      <span className={`inline-block max-w-[75%] rounded-2xl px-3 py-2 text-sm ${m.role === "fan" ? "bg-amber-500/20" : "bg-neutral-800"}`}>
-                        {m.content}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </details>
-            ))}
-          </div>
+          <AdminInbox conversations={conversations} />
         </section>
+
       </main>
     </div>
   );

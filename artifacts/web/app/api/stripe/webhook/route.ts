@@ -50,7 +50,9 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;
-        if (session.metadata?.booking_purchase === "1") {
+        if (session.metadata?.content_unlock === "1") {
+          await handleContentUnlock(session);
+        } else if (session.metadata?.booking_purchase === "1") {
           await handleBookingPurchase(session);
         } else if (session.metadata?.companion === "1") {
           const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 });
@@ -280,6 +282,20 @@ async function handleBookingPurchase(session: Stripe.Checkout.Session) {
     scheduled_at: null,
     status: "unscheduled",
   });
+}
+
+async function handleContentUnlock(session: Stripe.Checkout.Session) {
+  const admin = createAdminClient();
+  const messageId = session.metadata?.message_id;
+  const userId = session.metadata?.user_id ?? session.client_reference_id;
+  if (!messageId || !userId) return;
+  // Unlock only this fan's locked media message; idempotent (already unlocked = no-op).
+  await admin
+    .from("chat_messages")
+    .update({ locked: false, stripe_payment_intent_id: stringId(session.payment_intent) })
+    .eq("id", messageId)
+    .eq("profile_id", userId)
+    .eq("locked", true);
 }
 
 function stringId(value: string | { id: string } | null | undefined): string | null {
