@@ -34,6 +34,10 @@ export interface StripeSubRow {
   canceledAt: string | null;
   stage?: string;
   notes?: string | null;
+  deliveredAt?: string | null;
+  openedAt?: string | null;
+  clickedAt?: string | null;
+  bounced?: boolean;
 }
 
 export interface AdminStats {
@@ -159,11 +163,19 @@ export async function loadAdminStats(admin: SupabaseClient): Promise<AdminStats>
       stripeSubs.active = subs.active;
       stripeSubs.canceled = subs.canceled;
       if (subs.active.length > 0) mrrGbpFinal = subs.mrrGbp;
-      const { data: wb } = await admin.from("winback_targets").select("email, stage, notes");
+      const { data: wb } = await admin.from("winback_targets").select("email, stage, notes, delivered_at, opened_at, clicked_at, bounced");
       const wbByEmail = new Map((wb ?? []).map((r: { email: string; stage: string; notes: string | null }) => [r.email.toLowerCase(), r]));
       stripeSubs.canceled = stripeSubs.canceled.map((r) => {
-        const w = wbByEmail.get((r.email || "").toLowerCase());
-        return { ...r, stage: w?.stage ?? "not_started", notes: w?.notes ?? null };
+        const w = wbByEmail.get((r.email || "").toLowerCase()) as Record<string, unknown> | undefined;
+        return {
+          ...r,
+          stage: (w?.stage as string) ?? "not_started",
+          notes: (w?.notes as string) ?? null,
+          deliveredAt: (w?.delivered_at as string) ?? null,
+          openedAt: (w?.opened_at as string) ?? null,
+          clickedAt: (w?.clicked_at as string) ?? null,
+          bounced: (w?.bounced as boolean) ?? false,
+        };
       });
     } catch (e) {
       stripeSubs.error = e instanceof Error ? e.message : "Stripe subscriptions unavailable";

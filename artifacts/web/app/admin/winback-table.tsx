@@ -7,6 +7,7 @@ interface Row {
   product: string; amountGbp: number; interval: string; status: string;
   canceledAt: string | null; created: string;
   stage?: string; notes?: string | null;
+  deliveredAt?: string | null; openedAt?: string | null; clickedAt?: string | null; bounced?: boolean;
 }
 
 const STAGES: { value: string; label: string }[] = [
@@ -46,6 +47,20 @@ function date(iso: string | null) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
+function Pill({ on, label }: { on: boolean; label: string }) {
+  return <span className={`mr-1 rounded-full px-2 py-0.5 text-[11px] ${on ? "bg-emerald-500/15 text-emerald-400" : "bg-neutral-800 text-neutral-600"}`}>{label}</span>;
+}
+function Engagement({ r }: { r: Row }) {
+  if (r.bounced) return <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-[11px] text-red-400">bounced</span>;
+  return (
+    <span className="whitespace-nowrap">
+      <Pill on={!!r.deliveredAt} label="sent" />
+      <Pill on={!!r.openedAt} label="opened" />
+      <Pill on={!!r.clickedAt} label="clicked" />
+    </span>
+  );
+}
+
 export function WinbackTable({ rows }: { rows: Row[] }) {
   // Rows arrive already sorted by most recent cancellation (server-side).
   const [page, setPage] = useState(0);
@@ -55,8 +70,11 @@ export function WinbackTable({ rows }: { rows: Row[] }) {
   const start = page * PER_PAGE;
   const slice = rows.slice(start, start + PER_PAGE);
 
+  const opened = rows.filter((r) => r.openedAt).length;
+  const clicked = rows.filter((r) => r.clickedAt).length;
   return (
     <div className="space-y-3">
+      <p className="text-xs text-neutral-400">Funnel: <span className="text-emerald-400">{opened}</span> opened · <span className="text-emerald-400">{clicked}</span> clicked · of {rows.length} contacted</p>
       <div className="overflow-x-auto rounded-xl border border-neutral-800">
         <table className="w-full text-sm">
           <thead className="bg-neutral-900 text-left text-xs uppercase tracking-wide text-neutral-500">
@@ -69,6 +87,7 @@ export function WinbackTable({ rows }: { rows: Row[] }) {
               <th className="px-4 py-3">Cancelled</th>
               <th className="px-4 py-3">Since</th>
               <th className="px-4 py-3">Campaign stage</th>
+              <th className="px-4 py-3">Email engagement</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-800">
@@ -82,6 +101,7 @@ export function WinbackTable({ rows }: { rows: Row[] }) {
                 <td className="px-4 py-3">{date(r.canceledAt)}</td>
                 <td className="px-4 py-3 text-neutral-500">{date(r.created)}</td>
                 <td className="px-4 py-3"><StageCell email={r.email} value={r.stage ?? "not_started"} /></td>
+                <td className="px-4 py-3"><Engagement r={r} /></td>
               </tr>
             ))}
           </tbody>
