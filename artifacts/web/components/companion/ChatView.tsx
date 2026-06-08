@@ -36,29 +36,40 @@ export function ChatView({
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, justSent]);
 
-  // Live updates: new replies / media appear without refreshing.
+  // Authoritative refresh from the server (brings creator replies + unlocked media signed URLs).
+  async function refreshMessages(id: string) {
+    try {
+      const res = await fetch(`/api/chat/messages?conversationId=${id}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data.messages)) {
+        setMessages((cur) => {
+          const optimistic = cur.filter((m) => m.id.startsWith("tmp"));
+          const server: ChatMessage[] = data.messages;
+          const serverContents = new Set(server.map((m) => m.role + "|" + m.content));
+          const keptOptimistic = optimistic.filter((m) => !serverContents.has("fan|" + m.content));
+          return [...server, ...keptOptimistic];
+        });
+      }
+    } catch { /* ignore */ }
+  }
+
+  // Live updates: Supabase Realtime for instant push (real logins) + a poll fallback.
   useEffect(() => {
     if (!convId) return;
+    let active = true;
     const supabase = createClient();
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.access_token) supabase.realtime.setAuth(data.session.access_token);
+    })();
     const channel = supabase
       .channel("chat:" + convId)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages", filter: "conversation_id=eq." + convId },
-        (payload: { new: Record<string, unknown> }) => {
-          const m = payload.new;
-          if (m.status !== "sent" || m.role === "fan") return;
-          setMessages((cur) => cur.some((x) => x.id === m.id) ? cur : [...cur, {
-            id: m.id as string, role: m.role as ChatMessage["role"], content: m.content as string,
-            kind: m.kind as ChatMessage["kind"], media_kind: m.media_kind as ChatMessage["media_kind"],
-            locked: m.locked as boolean, price_pence: m.price_pence as number | null, caption: m.caption as string | null, signedUrl: null,
-          }]);
-        })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chat_messages", filter: "conversation_id=eq." + convId },
-        (payload: { new: Record<string, unknown> }) => {
-          const m = payload.new;
-          if (m.kind === "media" && m.locked === false) window.location.reload();
-        })
+      .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages", filter: "conversation_id=eq." + convId },
+        () => { if (active) refreshMessages(convId); })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    const poll = setInterval(() => { if (active) refreshMessages(convId); }, 7000);
+    return () => { active = false; clearInterval(poll); supabase.removeChannel(channel); };
   }, [convId]);
 
   async function send() {
