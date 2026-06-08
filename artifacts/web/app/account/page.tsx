@@ -8,6 +8,7 @@ import { CREDIT_PACKS } from "@/config/creator";
 import { CheckoutButton } from "@/components/companion/CheckoutButton";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
+import { computeAchievements, tenureLabel } from "@/lib/achievements";
 
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false } };
@@ -65,7 +66,7 @@ export default async function AccountPage() {
 
   let { data: profile } = await admin
     .from("profiles")
-    .select("membership_tier, subscription_status, subscription_end_date, stripe_customer_id")
+    .select("membership_tier, subscription_status, subscription_end_date, stripe_customer_id, created_at")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -74,7 +75,7 @@ export default async function AccountPage() {
     if (linked) {
       const { data } = await admin
         .from("profiles")
-        .select("membership_tier, subscription_status, subscription_end_date, stripe_customer_id")
+        .select("membership_tier, subscription_status, subscription_end_date, stripe_customer_id, created_at")
         .eq("id", user.id)
         .maybeSingle();
       profile = data;
@@ -86,7 +87,7 @@ export default async function AccountPage() {
     ["active", "trialing"].includes(profile.subscription_status);
   const tier = isMember ? (profile?.membership_tier ?? null) : null;
 
-  const [wallet, { data: ledger }, { data: bookingRows }] = await Promise.all([
+  const [wallet, { data: ledger }, { data: bookingRows }, { data: orderRows }] = await Promise.all([
     balances(admin, user.id),
     admin
       .from("credit_ledger")
@@ -99,8 +100,22 @@ export default async function AccountPage() {
       .select("id, scheduled_at, meeting_url, status, products(name)")
       .eq("user_id", user.id)
       .order("scheduled_at", { ascending: true }),
+    admin
+      .from("orders")
+      .select("status, created_at, products(price)")
+      .eq("user_id", user.id),
   ]);
   const bookings = (bookingRows ?? []) as Array<{ id: string; scheduled_at: string | null; meeting_url: string | null; status: string; products: { name: string } | null }>;
+  const orders = (orderRows ?? []) as Array<{ products: { price: number } | null }>;
+  const memberSinceMs = profile?.created_at ? new Date(profile.created_at).getTime() : null;
+  const achievements = computeAchievements({
+    tier,
+    isMember,
+    memberSinceMs,
+    orderCount: orders.length,
+    totalSpendPence: orders.reduce((sum, o) => sum + (o.products?.price ?? 0), 0),
+    sessionCount: bookings.length,
+  });
 
   return (
     <div className="bg-black text-neutral-100 min-h-screen">
@@ -109,36 +124,53 @@ export default async function AccountPage() {
         <h1 className="text-4xl font-semibold tracking-tight">Your Account</h1>
         <p className="mt-2 text-sm opacity-60">{user.email}</p>
 
-        {/* Membership */}
+        {/* Membership · content · achievements (merged) */}
         <section className="mt-10 rounded-2xl border border-neutral-700 p-8">
-          <h2 className="text-lg font-semibold">Membership</h2>
-          {isMember && tier ? (
-            <>
-              <p className="mt-3 text-2xl font-semibold text-amber-500">{TIER_NAME[tier] ?? tier}</p>
-              <p className="mt-2 text-sm opacity-70">
-                {MONTHLY_CREDITS[tier] ?? 0} free chat credits each month · renews {formatDate(profile?.subscription_end_date ?? null)}
-              </p>
-              <a href="/api/stripe/portal" className="mt-5 inline-block rounded-full border border-neutral-500 px-6 py-3 text-sm hover:border-amber-500 hover:text-amber-500">
-                Manage subscription &amp; billing
-              </a>
-            </>
-          ) : (
-            <>
-              <p className="mt-3 opacity-70">Guest account — you can chat with purchased credits, or join for monthly free credits and exclusive content.</p>
-              <Link href="/subscribe" className="mt-5 inline-block rounded-full bg-amber-500 px-6 py-3 text-sm font-medium text-black hover:bg-amber-400">
-                Become a member
-              </Link>
-            </>
-          )}
-        </section>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold">Your Membership</h2>
+              {isMember && tier ? (
+                <>
+                  <p className="mt-3 text-2xl font-semibold text-amber-500">{TIER_NAME[tier] ?? tier}</p>
+                  <p className="mt-1 text-sm opacity-70">
+                    Member for {tenureLabel(memberSinceMs)} · {MONTHLY_CREDITS[tier] ?? 0} free chat credits / month · renews {formatDate(profile?.subscription_end_date ?? null)}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-3 opacity-70">Guest account — chat with purchased credits, or join for monthly free credits, content &amp; sessions.</p>
+              )}
+            </div>
+            {isMember ? (
+              <a href="/api/stripe/portal" className="rounded-full border border-neutral-500 px-5 py-2.5 text-sm hover:border-amber-500 hover:text-amber-500">Manage &amp; billing</a>
+            ) : (
+              <Link href="/subscribe" className="rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-black hover:bg-amber-400">Become a member</Link>
+            )}
+          </div>
 
-        {/* Content access */}
-        <section className="mt-8 rounded-2xl border border-neutral-700 p-8">
-          <h2 className="text-lg font-semibold">Your content</h2>
-          <p className="mt-2 text-sm opacity-70">See everything your membership unlocks — the last 4 weeks of content, plus anything you own from the Vault.</p>
-          <div className="mt-4 flex gap-3">
-            <Link href="/portal" className="rounded-full bg-amber-500 px-6 py-3 text-sm font-medium text-black hover:bg-amber-400">View your content</Link>
-            <Link href="/portal/vault" className="rounded-full border border-neutral-500 px-6 py-3 text-sm hover:border-amber-500 hover:text-amber-500">The Vault</Link>
+          <div className="mt-6 border-t border-neutral-800 pt-6">
+            <p className="text-sm opacity-70">Everything your membership unlocks — the last 4 weeks of content, plus anything you own from the Vault.</p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Link href="/portal" className="rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-black hover:bg-amber-400">View your content</Link>
+              <Link href="/portal/vault" className="rounded-full border border-neutral-500 px-5 py-2.5 text-sm hover:border-amber-500 hover:text-amber-500">The Vault</Link>
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-neutral-800 pt-6">
+            <div className="flex items-baseline justify-between">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-neutral-400">Achievements</h3>
+              <span className="text-xs opacity-60">{achievements.filter((a) => a.earned).length} / {achievements.length} unlocked</span>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {achievements.map((a) => (
+                <div key={a.key} title={a.hint} className={`flex items-center gap-2 rounded-xl border p-3 ${a.earned ? "border-amber-500/40 bg-amber-500/5" : "border-neutral-800 opacity-50"}`}>
+                  <span className={`text-xl ${a.earned ? "" : "grayscale"}`}>{a.emoji}</span>
+                  <span className="leading-tight">
+                    <span className={`block text-sm font-medium ${a.earned ? "text-amber-300" : "text-neutral-400"}`}>{a.label}</span>
+                    <span className="block text-xs opacity-60">{a.earned ? "Unlocked" : a.hint}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -173,6 +205,10 @@ export default async function AccountPage() {
               Open chat
             </Link>
           </div>
+          <div className="mt-8 border-t border-neutral-800 pt-6">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-neutral-400">Wallet history</h3>
+            <WalletHistory rows={(ledger ?? []).map((row) => ({ label: LEDGER_LABELS[row.reason] ?? row.reason, delta: row.delta, created_at: row.created_at }))} />
+          </div>
         </section>
 
         {/* Bookings */}
@@ -204,11 +240,6 @@ export default async function AccountPage() {
           )}
         </section>
 
-        {/* History */}
-        <section className="mt-8 rounded-2xl border border-neutral-700 p-8">
-          <h2 className="text-lg font-semibold">Wallet history</h2>
-          <WalletHistory rows={(ledger ?? []).map((row) => ({ label: LEDGER_LABELS[row.reason] ?? row.reason, delta: row.delta, created_at: row.created_at }))} />
-        </section>
       </main>
       <SiteFooter />
     </div>

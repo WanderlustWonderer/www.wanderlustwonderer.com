@@ -115,18 +115,6 @@ export default async function SubscribePage() {
           </div>
         )}
 
-        {isMember && (
-          <div className="mb-10 rounded-xl border border-amber-500/40 bg-amber-500/10 p-5 text-center">
-            <p className="font-medium">
-              You are already a member{tierName ? ` — ${tierName.replace(/_/g, " ")}` : ""}.
-              {tierName === "the_gallery" && " Upgrade below to save 15%."}
-            </p>
-            <a href="/api/stripe/portal" className="mt-1 inline-block underline">
-              Manage your subscription
-            </a>
-          </div>
-        )}
-
         <div className="grid gap-8 md:grid-cols-3">
           {TIERS.map((tier) => {
           const rank = tierRank(tier.key as MembershipTier);
