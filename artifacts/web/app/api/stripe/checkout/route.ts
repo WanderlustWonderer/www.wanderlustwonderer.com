@@ -85,7 +85,7 @@ export async function POST(req: Request) {
   // (no double-subscribe, no downgrade via checkout). Upgrades are allowed.
   if (isActiveMember && !isUpgrade) {
     return NextResponse.json(
-      { error: 'already_subscribed', redirect: '/api/stripe/portal' },
+      { error: 'already_subscribed', redirect: '/account/manage' },
       { status: 409 },
     )
   }

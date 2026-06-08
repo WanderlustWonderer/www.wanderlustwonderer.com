@@ -141,7 +141,7 @@ export default async function AccountPage() {
               )}
             </div>
             {isMember ? (
-              <a href="/api/stripe/portal" className="rounded-full border border-neutral-500 px-5 py-2.5 text-sm hover:border-amber-500 hover:text-amber-500">Manage &amp; billing</a>
+              <Link href="/account/manage" className="rounded-full border border-neutral-500 px-5 py-2.5 text-sm hover:border-amber-500 hover:text-amber-500">Manage &amp; billing</Link>
             ) : (
               <Link href="/subscribe" className="rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-black hover:bg-amber-400">Become a member</Link>
             )}
