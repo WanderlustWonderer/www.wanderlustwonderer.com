@@ -25,7 +25,7 @@ export default async function VaultPage() {
       <main className="mx-auto max-w-3xl px-6 py-14">
         <header className="mb-8 text-center">
           <h1 className="text-4xl font-semibold tracking-tight">The Vault</h1>
-          <p className="mt-2 opacity-70">Everything beyond the last 4 weeks — all of it, forever.</p>
+          <p className="mt-2 opacity-70">Unlock the archive beyond the live 4-week window — up to the last 12 weeks of content.</p>
           <Link href="/portal" className="mt-4 inline-block text-sm text-amber-400 hover:text-amber-300">← Back to The Portal</Link>
         </header>
         <VaultClient blocks={blocks} vaultFull={ent.vaultFull} />

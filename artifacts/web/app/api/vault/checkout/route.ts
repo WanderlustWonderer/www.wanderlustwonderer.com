@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { getStripe } from "@/lib/companion/stripe";
-import { VAULT_FULL_PRICE, VAULT_BLOCK_PRICE } from "@/lib/content/store";
 import { getAppUrl } from "@/lib/app-url";
 
 export const runtime = "nodejs";
@@ -32,7 +31,7 @@ export async function POST(req: Request) {
   if (body.kind === "vault_full") {
     const session = await stripe.checkout.sessions.create({
       ...base,
-      line_items: [{ price: VAULT_FULL_PRICE, quantity: 1 }],
+      line_items: [{ price_data: { currency: "gbp", unit_amount: 88800, product_data: { name: "The Vault — last 12 weeks of content" } }, quantity: 1 }],
       metadata: { vault: "1", scope: "vault_full", user_id: user.id },
     });
     return NextResponse.json({ url: session.url });
@@ -40,7 +39,7 @@ export async function POST(req: Request) {
   if (body.kind === "block" && typeof body.periodKey === "number") {
     const session = await stripe.checkout.sessions.create({
       ...base,
-      line_items: [{ price: VAULT_BLOCK_PRICE, quantity: 1 }],
+      line_items: [{ price_data: { currency: "gbp", unit_amount: 35000, product_data: { name: "The Vault — 4-week block" } }, quantity: 1 }],
       metadata: { vault: "1", scope: "block", period_key: String(body.periodKey), user_id: user.id },
     });
     return NextResponse.json({ url: session.url });
