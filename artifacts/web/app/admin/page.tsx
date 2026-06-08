@@ -6,6 +6,7 @@ import { isAdmin } from "@/lib/admin/guard";
 import { loadAdminStats, type AccountRow, type StripeSubRow } from "@/lib/admin/stats";
 import { WinbackEmails } from "./winback-emails";
 import { WinbackTable } from "./winback-table";
+import { WinbackSender } from "./winback-sender";
 import { SlotManager } from "./slot-manager";
 import { AdminInbox } from "./inbox";
 import { ContentManager } from "./content-manager";
@@ -179,6 +180,7 @@ export default async function AdminPage() {
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">
             Cancelled subscribers · winback ({stats.stripeSubs.canceled.length})
           </h2>
+          <WinbackSender />
           <WinbackEmails emails={Array.from(new Set(stats.stripeSubs.canceled.map((r) => r.email).filter((e): e is string => !!e)))} />
           <WinbackTable rows={stats.stripeSubs.canceled} />
         </section>
