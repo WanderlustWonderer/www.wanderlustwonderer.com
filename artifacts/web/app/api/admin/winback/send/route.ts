@@ -33,8 +33,11 @@ export async function POST(req: Request) {
   if (!to) return NextResponse.json({ error: "no_recipient" }, { status: 400 });
 
   const { subject, html } = renderWinbackEmail(touch, body.name);
+  // Test previews send from Resend's shared domain so they work before the
+  // sending domain is verified (Resend restricts these to your own account email).
+  const from = body.test ? "Wanderlust Wonderer <onboarding@resend.dev>" : FROM;
   const resend = new Resend(process.env.RESEND_API_KEY);
-  const { data, error } = await resend.emails.send({ from: FROM, to, subject, html });
+  const { data, error } = await resend.emails.send({ from, to, subject, html });
   if (error) return NextResponse.json({ error: String((error as { message?: string }).message ?? error) }, { status: 502 });
   return NextResponse.json({ ok: true, id: data?.id, to });
 }
