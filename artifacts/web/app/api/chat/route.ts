@@ -74,5 +74,5 @@ export async function POST(req: Request) {
   }
 
   const b = await balances(admin, user.id);
-  return NextResponse.json({ ok: true, balance: b.total });
+  return NextResponse.json({ ok: true, balance: b.total, conversationId });
 }

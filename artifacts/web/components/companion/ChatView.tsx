@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CREATOR } from "@/config/creator";
+import { createClient } from "@/utils/supabase/client";
 
 export interface ChatMessage {
   id: string;
@@ -35,6 +36,31 @@ export function ChatView({
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, justSent]);
 
+  // Live updates: new replies / media appear without refreshing.
+  useEffect(() => {
+    if (!convId) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel("chat:" + convId)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages", filter: "conversation_id=eq." + convId },
+        (payload: { new: Record<string, unknown> }) => {
+          const m = payload.new;
+          if (m.status !== "sent" || m.role === "fan") return;
+          setMessages((cur) => cur.some((x) => x.id === m.id) ? cur : [...cur, {
+            id: m.id as string, role: m.role as ChatMessage["role"], content: m.content as string,
+            kind: m.kind as ChatMessage["kind"], media_kind: m.media_kind as ChatMessage["media_kind"],
+            locked: m.locked as boolean, price_pence: m.price_pence as number | null, caption: m.caption as string | null, signedUrl: null,
+          }]);
+        })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chat_messages", filter: "conversation_id=eq." + convId },
+        (payload: { new: Record<string, unknown> }) => {
+          const m = payload.new;
+          if (m.kind === "media" && m.locked === false) window.location.reload();
+        })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [convId]);
+
   async function send() {
     const message = draft.trim();
     if (!message || sending) return;
@@ -46,6 +72,7 @@ export function ChatView({
       if (res.status === 402) { setMessages((m) => m.slice(0, -1)); setDraft(message); setPaywall(true); return; }
       if (!res.ok) { setMessages((m) => m.slice(0, -1)); setDraft(message); setError("Couldn't send — try again."); return; }
       if (typeof data.balance === "number") setBalance(data.balance);
+      if (data.conversationId) setConvId(data.conversationId);
       setJustSent(true);
     } catch { setMessages((m) => m.slice(0, -1)); setDraft(message); setError("Connection hiccup. Try again."); }
     finally { setSending(false); }
