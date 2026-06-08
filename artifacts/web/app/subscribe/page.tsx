@@ -128,8 +128,8 @@ export default async function SubscribePage() {
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={tier.image} alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full object-cover object-top opacity-25" />
-              <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/65" />
+              <img src={tier.image} alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full object-cover object-top opacity-35" />
+              <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/55" />
               <div className="relative z-10 flex flex-1 flex-col">
               <h2 className="text-xl font-semibold">{tier.name}</h2>
               <p className="text-sm text-amber-400/90">{tier.subtitle}</p>
