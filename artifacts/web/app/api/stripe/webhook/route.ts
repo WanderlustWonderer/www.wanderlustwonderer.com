@@ -12,7 +12,6 @@ import {
 } from "@/lib/companion/webhook-handlers";
 import { tierFromPriceId, creditsFromPriceId } from "@/lib/companion/stripe";
 import { applyRenewal, grantPurchase } from "@/lib/wallet/ledger";
-import { PRICE_TO_TIER } from "@/lib/stripe/tiers";
 
 export const runtime = "nodejs";
 
