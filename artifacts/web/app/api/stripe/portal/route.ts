@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/client'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
-import { getAppUrl } from "@/lib/app-url";
+import { getAppUrl, appRedirectUrl } from "@/lib/app-url";
 
 export const runtime = 'nodejs'
 
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.redirect(new URL('/login', req.url))
+    return NextResponse.redirect(appRedirectUrl(req, '/login'))
   }
 
   const admin = createAdminClient()
@@ -28,7 +28,7 @@ export async function GET(req: Request) {
     .maybeSingle()
 
   if (!profile?.stripe_customer_id) {
-    return NextResponse.redirect(new URL('/subscribe', req.url))
+    return NextResponse.redirect(appRedirectUrl(req, '/subscribe'))
   }
 
   const appUrl = getAppUrl(req);

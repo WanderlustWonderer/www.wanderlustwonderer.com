@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.redirect(new URL("/login", req.url));
+  if (!user) return NextResponse.redirect(appRedirectUrl(req, "/login"));
 
   const admin = createAdminClient();
   const { data: profile } = await admin
@@ -21,7 +21,7 @@ export async function GET(req: Request) {
     .maybeSingle();
 
   if (!profile?.stripe_customer_id) {
-    return NextResponse.redirect(new URL("/pricing", req.url));
+    return NextResponse.redirect(appRedirectUrl(req, "/pricing"));
   }
 
   const appUrl = getAppUrl(req);

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { appRedirectUrl } from "@/lib/app-url";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  return NextResponse.redirect(new URL("/", req.url));
+  return NextResponse.redirect(appRedirectUrl(req, "/"));
 }
