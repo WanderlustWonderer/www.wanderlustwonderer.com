@@ -6,6 +6,8 @@ import { isAdmin } from "@/lib/admin/guard";
 import { loadAdminStats, type AccountRow } from "@/lib/admin/stats";
 import { SlotManager } from "./slot-manager";
 import { AdminInbox } from "./inbox";
+import { ContentManager } from "./content-manager";
+import { isLive } from "@/lib/content/vault";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +87,11 @@ export default async function AdminPage() {
     .filter((b: any) => b.scheduled_at)
     .map((b: any) => ({ id: b.id, scheduled_at: b.scheduled_at, meeting_url: b.meeting_url, status: b.status, product_name: b.products?.name ?? "Session", email: b.profiles?.email ?? "member" }));
 
+  const { data: contentRows } = await admin
+    .from("content_items").select("id, title, min_tier, content_type, published_at")
+    .not("published_at", "is", null).order("published_at", { ascending: false }).limit(200);
+  const contentItems = (contentRows ?? []).map((c: any) => ({ ...c, live: isLive(c.published_at) }));
+
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <header className="border-b border-neutral-800 bg-black">
@@ -134,6 +141,12 @@ export default async function AdminPage() {
             Bookings &amp; availability
           </h2>
           <SlotManager products={bookingProducts ?? []} openSlots={openSlots} bookings={upcomingBookings} />
+        </section>
+
+        {/* Content — upload & manage membership content */}
+        <section>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Content</h2>
+          <ContentManager items={contentItems} />
         </section>
 
         {/* Messages — review AI drafts, reply, send paid content */}

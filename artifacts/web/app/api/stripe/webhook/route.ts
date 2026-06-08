@@ -50,7 +50,9 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;
-        if (session.metadata?.content_unlock === "1") {
+        if (session.metadata?.vault === "1") {
+          await handleVaultPurchase(session);
+        } else if (session.metadata?.content_unlock === "1") {
           await handleContentUnlock(session);
         } else if (session.metadata?.booking_purchase === "1") {
           await handleBookingPurchase(session);
@@ -296,6 +298,20 @@ async function handleContentUnlock(session: Stripe.Checkout.Session) {
     .eq("id", messageId)
     .eq("profile_id", userId)
     .eq("locked", true);
+}
+
+async function handleVaultPurchase(session: Stripe.Checkout.Session) {
+  const admin = createAdminClient();
+  const userId = session.metadata?.user_id ?? session.client_reference_id;
+  const scope = session.metadata?.scope;
+  if (!userId || (scope !== "vault_full" && scope !== "block")) return;
+  const periodKey = scope === "block" ? Number(session.metadata?.period_key) : null;
+  // Idempotent via unique (profile_id, scope, period_key).
+  const { error } = await admin.from("content_entitlements").insert({
+    profile_id: userId, scope, period_key: periodKey,
+    stripe_payment_intent_id: stringId(session.payment_intent),
+  });
+  if (error && error.code !== "23505") throw error;
 }
 
 function stringId(value: string | { id: string } | null | undefined): string | null {

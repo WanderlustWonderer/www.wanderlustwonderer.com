@@ -129,6 +129,16 @@ export default async function AccountPage() {
           )}
         </section>
 
+        {/* Content access */}
+        <section className="mt-8 rounded-2xl border border-neutral-700 p-8">
+          <h2 className="text-lg font-semibold">Your content</h2>
+          <p className="mt-2 text-sm opacity-70">See everything your membership unlocks — the last 4 weeks of content, plus anything you own from the Vault.</p>
+          <div className="mt-4 flex gap-3">
+            <Link href="/portal" className="rounded-full bg-amber-500 px-6 py-3 text-sm font-medium text-black hover:bg-amber-400">View your content</Link>
+            <Link href="/portal/vault" className="rounded-full border border-neutral-500 px-6 py-3 text-sm hover:border-amber-500 hover:text-amber-500">The Vault</Link>
+          </div>
+        </section>
+
         {/* Wallet */}
         <section className="mt-8 rounded-2xl border border-amber-500/40 p-8">
           <div className="flex items-baseline justify-between">
