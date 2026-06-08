@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { getStripe } from "@/lib/companion/stripe";
+import { getAppUrl } from "@/lib/app-url";
 
 export const runtime = "nodejs";
 
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
   await admin.from("profiles").upsert({ id: user.id, email: user.email }, { onConflict: "id" });
 
   const stripe = getStripe();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
+  const appUrl = getAppUrl(req);
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     client_reference_id: user.id,

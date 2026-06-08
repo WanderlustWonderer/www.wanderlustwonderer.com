@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { getStripe } from "@/lib/companion/stripe";
 import { VAULT_FULL_PRICE, VAULT_BLOCK_PRICE } from "@/lib/content/store";
+import { getAppUrl } from "@/lib/app-url";
 
 export const runtime = "nodejs";
 
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
   await admin.from("profiles").upsert({ id: user.id, email: user.email }, { onConflict: "id" });
 
   const stripe = getStripe();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
+  const appUrl = getAppUrl(req);
   const base = {
     mode: "payment" as const,
     client_reference_id: user.id,

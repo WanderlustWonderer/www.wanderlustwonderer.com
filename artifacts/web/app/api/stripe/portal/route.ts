@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/client'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { getAppUrl } from "@/lib/app-url";
 
 export const runtime = 'nodejs'
 
@@ -30,7 +31,7 @@ export async function GET(req: Request) {
     return NextResponse.redirect(new URL('/subscribe', req.url))
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin
+  const appUrl = getAppUrl(req);
   const session = await stripe.billingPortal.sessions.create({
     customer: profile.stripe_customer_id,
     return_url: `${appUrl}/account`,

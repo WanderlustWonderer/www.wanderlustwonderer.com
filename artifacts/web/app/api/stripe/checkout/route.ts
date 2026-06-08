@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/client'
 import { TIER_PRICE_IDS, type MembershipTier } from '@/lib/stripe/tiers'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { getAppUrl } from "@/lib/app-url";
 
 export const runtime = 'nodejs'
 
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
     .eq('id', user.id)
     .maybeSingle()
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin
+  const appUrl = getAppUrl(req);
   const customerParams = profile?.stripe_customer_id
     ? { customer: profile.stripe_customer_id }
     : { customer_email: user.email ?? undefined }

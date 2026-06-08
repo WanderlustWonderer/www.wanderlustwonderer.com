@@ -4,6 +4,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { ensureCompanionProfile } from "@/lib/companion/profile";
 import { getStripe, priceIdForTier, priceIdForPack } from "@/lib/companion/stripe";
 import type { TierKey } from "@/config/creator";
+import { getAppUrl } from "@/lib/app-url";
 
 export const runtime = "nodejs";
 
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
   const admin = createAdminClient();
   const profile = await ensureCompanionProfile(admin, user.id, user.email?.split("@")[0]);
   const stripe = getStripe();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
+  const appUrl = getAppUrl(req);
 
   const common = {
     client_reference_id: user.id,
