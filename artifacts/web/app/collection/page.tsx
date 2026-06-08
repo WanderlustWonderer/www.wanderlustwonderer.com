@@ -21,7 +21,7 @@ export default async function CollectionPage() {
     .select('id, name, description, price, product_type, image_url')
     .eq('active', true)
     .neq('product_type', 'booking')
-    .order('price', { ascending: false })
+    .order('price', { ascending: true })
 
   return (
     <div className="bg-black text-neutral-100 min-h-screen">
