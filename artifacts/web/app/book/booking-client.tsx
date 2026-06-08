@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 interface Slot { id: string; starts_at: string; duration_min: number; }
-interface Product { id: string; name: string; description: string | null; price: number; }
+interface Product { id: string; name: string; description: string | null; price: number; image_url: string | null; }
 interface OwnedSession { id: string; product_id: string; product_name: string; slots: Slot[]; }
 
 function gbp(pence: number) {
@@ -83,7 +83,12 @@ export function BookingClient({
         <p className="mb-5 text-sm text-mute">Purchase a session, then pick your time. Available to everyone — guest or member.</p>
         <div className="grid gap-5 sm:grid-cols-3">
           {products.map((p) => (
-            <div key={p.id} className="flex flex-col rounded-2xl border border-line bg-panel p-6">
+            <div key={p.id} className="flex flex-col overflow-hidden rounded-2xl border border-line bg-panel">
+              {p.image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.image_url} alt={p.name} loading="lazy" className="aspect-[3/4] w-full object-cover" />
+              )}
+              <div className="flex flex-1 flex-col p-6">
               <h3 className="font-semibold">{p.name}</h3>
               <p className="mt-1 text-2xl font-semibold text-accent">{gbp(p.price)}</p>
               {p.description && <p className="mt-2 flex-1 text-sm text-mute">{p.description}</p>}
@@ -91,6 +96,7 @@ export function BookingClient({
                 className="mt-5 rounded-full bg-amber-500 px-5 py-3 text-sm font-medium text-black hover:bg-amber-400 transition disabled:opacity-40">
                 {busy === "buy-" + p.id ? "Opening…" : "Buy this session"}
               </button>
+              </div>
             </div>
           ))}
         </div>

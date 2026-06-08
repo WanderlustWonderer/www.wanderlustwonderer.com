@@ -19,7 +19,7 @@ export default async function BookPage() {
 
   const { data: products } = await admin
     .from("products")
-    .select("id, name, description, price")
+    .select("id, name, description, price, image_url")
     .eq("active", true)
     .eq("product_type", "booking")
     .order("price", { ascending: true });

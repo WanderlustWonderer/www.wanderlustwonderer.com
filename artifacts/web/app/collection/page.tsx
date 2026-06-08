@@ -20,6 +20,7 @@ export default async function CollectionPage() {
     .from('products')
     .select('id, name, description, price, product_type, image_url')
     .eq('active', true)
+    .neq('product_type', 'booking')
     .order('price', { ascending: false })
 
   return (
