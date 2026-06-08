@@ -5,6 +5,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { isAdmin } from "@/lib/admin/guard";
 import { loadAdminStats, type AccountRow, type StripeSubRow } from "@/lib/admin/stats";
 import { WinbackEmails } from "./winback-emails";
+import { WinbackTable } from "./winback-table";
 import { SlotManager } from "./slot-manager";
 import { AdminInbox } from "./inbox";
 import { ContentManager } from "./content-manager";
@@ -177,7 +178,7 @@ export default async function AdminPage() {
             Cancelled subscribers · winback ({stats.stripeSubs.canceled.length})
           </h2>
           <WinbackEmails emails={Array.from(new Set(stats.stripeSubs.canceled.map((r) => r.email).filter((e): e is string => !!e)))} />
-          <StripeTable rows={stats.stripeSubs.canceled} mode="canceled" />
+          <WinbackTable rows={stats.stripeSubs.canceled} />
         </section>
 
         {/* All accounts */}
