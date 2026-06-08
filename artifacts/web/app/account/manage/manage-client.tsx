@@ -114,64 +114,42 @@ export function ManageMembership(props: ManageProps) {
 
             {step === 2 && (
               <>
-                <h3 className="text-xl font-semibold">Stay for half price 💛</h3>
-                <p className="mt-3 text-sm text-neutral-300">I'd hate to see you go. Take <span className="font-semibold text-amber-400">50% off your next 3 months</span> — same full access, half the price.</p>
-                <div className="mt-6 flex flex-col gap-2">
-                  <button onClick={() => act("discount")} disabled={busy !== null} className="rounded-full bg-amber-500 px-4 py-2.5 text-sm font-medium text-black hover:bg-amber-400 disabled:opacity-50">
-                    {busy === "discount" ? "Applying…" : "Claim 50% off for 3 months"}
+                <h3 className="text-xl font-semibold">Before you go — two ways to stay</h3>
+                <p className="mt-3 text-sm text-neutral-300">I'd hate to lose you. Pick whichever suits you better:</p>
+
+                <div className="mt-5 rounded-xl border border-amber-500/40 bg-amber-500/5 p-4">
+                  <p className="text-sm font-semibold text-amber-300">25% off your next 3 months</p>
+                  <p className="mt-1 text-xs text-neutral-400">Same full access, a quarter off — applied automatically.</p>
+                  <button onClick={() => act("discount")} disabled={busy !== null}
+                    className="mt-3 w-full rounded-full bg-amber-500 px-4 py-2.5 text-sm font-medium text-black hover:bg-amber-400 disabled:opacity-50">
+                    {busy === "discount" ? "Applying…" : "Claim 25% off for 3 months"}
                   </button>
-                  <button onClick={() => setStep(3)} className="text-xs text-neutral-500 underline hover:text-neutral-300">No thanks, continue</button>
+                </div>
+
+                {downgradeTiers.length > 0 && (
+                  <div className="mt-3 rounded-xl border border-neutral-700 p-4">
+                    <p className="text-sm font-semibold">Switch to a lighter plan</p>
+                    <p className="mt-1 text-xs text-neutral-400">Keep your spot for less instead of leaving.</p>
+                    <div className="mt-3 space-y-2">
+                      {downgradeTiers.map((t) => (
+                        <button key={t} onClick={() => act("downgrade", t)} disabled={busy !== null}
+                          className="flex w-full items-center justify-between rounded-lg border border-neutral-700 px-4 py-2.5 text-sm hover:border-amber-500 disabled:opacity-50">
+                          <span className="font-medium text-amber-400">{TIER_NAME[t]}</span>
+                          <span className="text-neutral-400">{gbp(TIER_PRICE[t])}/mo</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-6 flex flex-col gap-2">
+                  <button onClick={() => setStep(0)} className="rounded-full border border-neutral-700 px-4 py-2.5 text-sm hover:border-amber-500 hover:text-amber-400">Keep my membership as it is</button>
+                  <button onClick={() => setStep(3)} className="text-xs text-neutral-500 underline hover:text-neutral-300">No thanks, continue cancelling</button>
                 </div>
               </>
             )}
 
             {step === 3 && (
-              downgradeTiers.length > 0 ? (
-                <>
-                  <h3 className="text-xl font-semibold">Switch to a lighter plan?</h3>
-                  <p className="mt-3 text-sm text-neutral-300">Keep your spot for less instead of leaving entirely.</p>
-                  <div className="mt-5 space-y-2">
-                    {downgradeTiers.map((t) => (
-                      <button key={t} onClick={() => act("downgrade", t)} disabled={busy !== null}
-                        className="flex w-full items-center justify-between rounded-xl border border-neutral-700 px-4 py-3 text-sm hover:border-amber-500 disabled:opacity-50">
-                        <span className="font-medium text-amber-400">{TIER_NAME[t]}</span>
-                        <span className="text-neutral-400">{gbp(TIER_PRICE[t])}/mo</span>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-5 flex flex-col gap-2">
-                    <button onClick={() => setStep(0)} className="rounded-full bg-amber-500 px-4 py-2.5 text-sm font-medium text-black hover:bg-amber-400">Actually, keep me where I am</button>
-                    <button onClick={() => setStep(4)} className="text-xs text-neutral-500 underline hover:text-neutral-300">No, continue cancelling</button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <h3 className="text-xl font-semibold">Take a month on me</h3>
-                  <p className="mt-3 text-sm text-neutral-300">Your <span className="font-semibold text-amber-400">next month is free</span> — no charge, full access. Stay and see what's coming.</p>
-                  <div className="mt-6 flex flex-col gap-2">
-                    <button onClick={() => act("freemonth")} disabled={busy !== null} className="rounded-full bg-amber-500 px-4 py-2.5 text-sm font-medium text-black hover:bg-amber-400 disabled:opacity-50">
-                      {busy === "freemonth" ? "Applying…" : "Give me a free month"}
-                    </button>
-                    <button onClick={() => setStep(4)} className="text-xs text-neutral-500 underline hover:text-neutral-300">No thanks, continue</button>
-                  </div>
-                </>
-              )
-            )}
-
-            {step === 4 && (
-              <>
-                <h3 className="text-xl font-semibold">One last thing — a free month</h3>
-                <p className="mt-3 text-sm text-neutral-300">Before you go: have your <span className="font-semibold text-amber-400">next month free</span>, on me. No charge, nothing changes.</p>
-                <div className="mt-6 flex flex-col gap-2">
-                  <button onClick={() => act("freemonth")} disabled={busy !== null} className="rounded-full bg-amber-500 px-4 py-2.5 text-sm font-medium text-black hover:bg-amber-400 disabled:opacity-50">
-                    {busy === "freemonth" ? "Applying…" : "Yes — give me a free month"}
-                  </button>
-                  <button onClick={() => setStep(5)} className="text-xs text-neutral-500 underline hover:text-neutral-300">No, I want to cancel</button>
-                </div>
-              </>
-            )}
-
-            {step === 5 && (
               <>
                 <h3 className="text-xl font-semibold">Confirm cancellation</h3>
                 <p className="mt-3 text-sm text-neutral-300">You'll keep full access until <span className="font-semibold">{renewal}</span>, then your membership ends and your locked-in price is gone.</p>

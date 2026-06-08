@@ -5,7 +5,7 @@ import { TIER_PRICE_IDS, tierRank, type MembershipTier } from "@/lib/stripe/tier
 
 export const runtime = "nodejs";
 
-type Action = "discount" | "freemonth" | "downgrade" | "cancel";
+type Action = "discount" | "downgrade" | "cancel";
 
 /** Ensure a fixed-id coupon exists; create it once, reuse forever. */
 async function ensureCoupon(id: string, params: Record<string, unknown>) {
@@ -52,15 +52,9 @@ export async function POST(req: Request) {
   if (!subId) return NextResponse.json({ error: "no_stripe_subscription" }, { status: 409 });
 
   if (action === "discount") {
-    const coupon = await ensureCoupon("RETAIN50_3MO", { name: "Loyalty 50% (3 months)", percent_off: 50, duration: "repeating", duration_in_months: 3 });
+    const coupon = await ensureCoupon("RETAIN25_3MO", { name: "Loyalty 25% (3 months)", percent_off: 25, duration: "repeating", duration_in_months: 3 });
     await stripe.subscriptions.update(subId, { discounts: [{ coupon }] } as never);
-    return NextResponse.json({ ok: true, message: "50% off your next 3 months is locked in 💛" });
-  }
-
-  if (action === "freemonth") {
-    const coupon = await ensureCoupon("RETAINFREE1MO", { name: "A month on me", percent_off: 100, duration: "once" });
-    await stripe.subscriptions.update(subId, { discounts: [{ coupon }] } as never);
-    return NextResponse.json({ ok: true, message: "Your next month is on me — enjoy 💛" });
+    return NextResponse.json({ ok: true, message: "25% off your next 3 months is locked in 💛" });
   }
 
   if (action === "downgrade") {
