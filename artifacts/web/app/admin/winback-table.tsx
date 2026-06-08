@@ -6,6 +6,34 @@ interface Row {
   subId: string; email: string | null; name: string | null;
   product: string; amountGbp: number; interval: string; status: string;
   canceledAt: string | null; created: string;
+  stage?: string; notes?: string | null;
+}
+
+const STAGES: { value: string; label: string }[] = [
+  { value: "not_started", label: "Not started" },
+  { value: "touch1", label: "Touch 1 sent" },
+  { value: "offer25", label: "25% offered" },
+  { value: "gift", label: "Gift / session" },
+  { value: "offer50", label: "50% offered" },
+  { value: "won", label: "Won back" },
+  { value: "lost", label: "Lost / nurture" },
+];
+
+function StageCell({ email, value }: { email: string | null; value: string }) {
+  const [stage, setStage] = useState(value);
+  const [saving, setSaving] = useState(false);
+  if (!email) return <span className="text-xs text-neutral-600">—</span>;
+  async function save(next: string) {
+    setStage(next); setSaving(true);
+    await fetch("/api/admin/winback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, stage: next }) }).catch(() => {});
+    setSaving(false);
+  }
+  return (
+    <select value={stage} onChange={(e) => save(e.target.value)} disabled={saving}
+      className="rounded-md border border-neutral-700 bg-neutral-950 px-2 py-1 text-xs text-neutral-100">
+      {STAGES.map((st) => <option key={st.value} value={st.value}>{st.label}</option>)}
+    </select>
+  );
 }
 
 const PER_PAGE = 10;
@@ -40,6 +68,7 @@ export function WinbackTable({ rows }: { rows: Row[] }) {
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Cancelled</th>
               <th className="px-4 py-3">Since</th>
+              <th className="px-4 py-3">Campaign stage</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-800">
@@ -52,6 +81,7 @@ export function WinbackTable({ rows }: { rows: Row[] }) {
                 <td className="px-4 py-3"><span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs text-red-400">{r.status}</span></td>
                 <td className="px-4 py-3">{date(r.canceledAt)}</td>
                 <td className="px-4 py-3 text-neutral-500">{date(r.created)}</td>
+                <td className="px-4 py-3"><StageCell email={r.email} value={r.stage ?? "not_started"} /></td>
               </tr>
             ))}
           </tbody>

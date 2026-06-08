@@ -32,6 +32,8 @@ export interface StripeSubRow {
   currentPeriodEnd: string | null;
   created: string;
   canceledAt: string | null;
+  stage?: string;
+  notes?: string | null;
 }
 
 export interface AdminStats {
@@ -157,6 +159,12 @@ export async function loadAdminStats(admin: SupabaseClient): Promise<AdminStats>
       stripeSubs.active = subs.active;
       stripeSubs.canceled = subs.canceled;
       if (subs.active.length > 0) mrrGbpFinal = subs.mrrGbp;
+      const { data: wb } = await admin.from("winback_targets").select("email, stage, notes");
+      const wbByEmail = new Map((wb ?? []).map((r: { email: string; stage: string; notes: string | null }) => [r.email.toLowerCase(), r]));
+      stripeSubs.canceled = stripeSubs.canceled.map((r) => {
+        const w = wbByEmail.get((r.email || "").toLowerCase());
+        return { ...r, stage: w?.stage ?? "not_started", notes: w?.notes ?? null };
+      });
     } catch (e) {
       stripeSubs.error = e instanceof Error ? e.message : "Stripe subscriptions unavailable";
     }
