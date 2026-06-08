@@ -18,13 +18,21 @@ export interface ChatMessage {
   signedUrl?: string | null;
 }
 
+export interface QueueKind {
+  unlocked: number;       // how many of this kind the fan has paid to unlock
+  remaining: number;      // how many more they can still receive
+  nextPrice: number | null; // price (pence) of the next item, if any
+  canUnlock: boolean;
+}
+export interface QueueSummary { photo: QueueKind; video: QueueKind; }
+
 function gbp(p: number) {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", minimumFractionDigits: p % 100 === 0 ? 0 : 2 }).format(p / 100);
 }
 
 export function ChatView({
   initialMessages, conversationId, initialBalance, viewerLabel,
-}: { initialMessages: ChatMessage[]; conversationId: string | null; initialBalance: number; viewerLabel: string; }) {
+}: { initialMessages: ChatMessage[]; conversationId: string | null; initialBalance: number; viewerLabel: string; queue?: QueueSummary; }) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [convId, setConvId] = useState(conversationId);
   const [balance, setBalance] = useState(initialBalance);
@@ -99,6 +107,20 @@ export function ChatView({
     } catch { setError("Couldn't open checkout — try again."); }
   }
 
+  const [unlocking, setUnlocking] = useState<"photo" | "video" | null>(null);
+  async function unlockNext(kind: "photo" | "video") {
+    if (unlocking) return;
+    setUnlocking(kind); setError(null);
+    try {
+      const res = await fetch("/api/content/queue-next", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind }) });
+      const data = await res.json();
+      if (res.status === 409) { setError(`No more ${kind}s in the queue for you right now.`); return; }
+      if (!res.ok || !data.url) throw new Error();
+      window.location.href = data.url;
+    } catch { setError("Couldn't open checkout — try again."); }
+    finally { setUnlocking(null); }
+  }
+
   return (
     <div className="flex h-dvh flex-col bg-ink text-fg">
       <header className="flex items-center justify-between border-b border-line bg-panel px-4 py-3">
@@ -159,6 +181,33 @@ export function ChatView({
       </div>
 
       {error && <p className="px-4 pb-2 text-center text-xs text-red-400">{error}</p>}
+
+      {queue && (queue.photo.canUnlock || queue.video.canUnlock || queue.photo.unlocked > 0 || queue.video.unlocked > 0) && (
+        <div className="border-t border-line bg-panel-2/60 px-3 py-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            {queue.photo.canUnlock && (
+              <button onClick={() => unlockNext("photo")} disabled={unlocking !== null}
+                className="rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-[#14060c] hover:opacity-90 disabled:opacity-50">
+                {unlocking === "photo" ? "Opening…" : `Unlock next photo${queue.photo.nextPrice ? " · " + gbp(queue.photo.nextPrice) : ""}`}
+              </button>
+            )}
+            {queue.video.canUnlock && (
+              <button onClick={() => unlockNext("video")} disabled={unlocking !== null}
+                className="rounded-full border border-accent/60 px-4 py-1.5 text-xs font-medium text-accent hover:bg-accent/10 disabled:opacity-50">
+                {unlocking === "video" ? "Opening…" : `Unlock next video${queue.video.nextPrice ? " · " + gbp(queue.video.nextPrice) : ""}`}
+              </button>
+            )}
+            <span className="ml-auto text-[11px] text-mute">
+              {queue.photo.unlocked + queue.video.unlocked > 0 && (
+                <>You&apos;ve unlocked {queue.photo.unlocked} photo{queue.photo.unlocked === 1 ? "" : "s"} &amp; {queue.video.unlocked} video{queue.video.unlocked === 1 ? "" : "s"}. </>
+              )}
+              {(queue.photo.remaining > 0 || queue.video.remaining > 0)
+                ? `${queue.photo.remaining} more photo${queue.photo.remaining === 1 ? "" : "s"} · ${queue.video.remaining} more video${queue.video.remaining === 1 ? "" : "s"} waiting`
+                : "That's everything for now 💫"}
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="border-t border-line bg-panel p-3">
         <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex gap-2">

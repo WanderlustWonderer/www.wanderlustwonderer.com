@@ -10,6 +10,7 @@ import { WinbackSender } from "./winback-sender";
 import { SlotManager } from "./slot-manager";
 import { AdminInbox } from "./inbox";
 import { ContentManager } from "./content-manager";
+import { QueueManager, type QueueItem } from "./queue-manager";
 import { isLive } from "@/lib/content/vault";
 
 export const dynamic = "force-dynamic";
@@ -73,15 +74,16 @@ export default async function AdminPage() {
   );
 
   type Acct = {
-    id: string; email: string; messages: any[];
+    id: string; profileId: string; email: string; messages: any[];
     latestDraftId: string | null; latestDraft: string | null;
     needsReply: boolean; oldestUnansweredAt: string | null; lastActivity: string;
     _draftAt: string | null;
+    queue?: { photoUnlocked: number; videoUnlocked: number; photoRemaining: number; videoRemaining: number };
   };
   const byAccount = new Map<string, Acct>();
   for (const o of perConv) {
     const g = byAccount.get(o.profileId) ?? {
-      id: o.convId, email: emailById.get(o.profileId) ?? "unknown", messages: [],
+      id: o.convId, profileId: o.profileId, email: emailById.get(o.profileId) ?? "unknown", messages: [],
       latestDraftId: null, latestDraft: null, needsReply: false,
       oldestUnansweredAt: null, lastActivity: "", _draftAt: null,
     };
@@ -105,6 +107,42 @@ export default async function AdminPage() {
     g.needsReply = !!g.oldestUnansweredAt || !!g.latestDraft;
     return g;
   });
+
+  // ---- Shared content queue: library items, per-item unlock counts, per-fan tallies ----
+  const [{ data: queueRows }, { data: queueMsgs }] = await Promise.all([
+    admin.from("media_queue").select("id, kind, media_path, price_pence, caption, position").eq("active", true).order("position", { ascending: true }),
+    admin.from("chat_messages").select("queue_item_id, profile_id, media_kind, locked").not("queue_item_id", "is", null),
+  ]);
+  const activePhotoIds = (queueRows ?? []).filter((q: any) => q.kind === "photo").map((q: any) => q.id);
+  const activeVideoIds = (queueRows ?? []).filter((q: any) => q.kind === "video").map((q: any) => q.id);
+  const unlockByItem = new Map<string, number>();
+  const queueByFan = new Map<string, { photoDelivered: Set<string>; videoDelivered: Set<string>; photoUnlocked: number; videoUnlocked: number }>();
+  for (const m of queueMsgs ?? []) {
+    if (m.locked === false && m.queue_item_id) unlockByItem.set(m.queue_item_id, (unlockByItem.get(m.queue_item_id) ?? 0) + 1);
+    const g = queueByFan.get(m.profile_id) ?? { photoDelivered: new Set<string>(), videoDelivered: new Set<string>(), photoUnlocked: 0, videoUnlocked: 0 };
+    if (m.media_kind === "photo") { g.photoDelivered.add(m.queue_item_id); if (m.locked === false) g.photoUnlocked++; }
+    else if (m.media_kind === "video") { g.videoDelivered.add(m.queue_item_id); if (m.locked === false) g.videoUnlocked++; }
+    queueByFan.set(m.profile_id, g);
+  }
+  for (const a of accounts) {
+    const g = queueByFan.get(a.profileId);
+    const pd = g?.photoDelivered ?? new Set<string>();
+    const vd = g?.videoDelivered ?? new Set<string>();
+    a.queue = {
+      photoUnlocked: g?.photoUnlocked ?? 0,
+      videoUnlocked: g?.videoUnlocked ?? 0,
+      photoRemaining: activePhotoIds.filter((id: string) => !pd.has(id)).length,
+      videoRemaining: activeVideoIds.filter((id: string) => !vd.has(id)).length,
+    };
+  }
+  const queueItems: QueueItem[] = await Promise.all((queueRows ?? []).map(async (q: any) => {
+    let signedUrl: string | null = null;
+    if (q.kind === "photo") {
+      const { data: sg } = await admin.storage.from("chat-media").createSignedUrl(q.media_path, 600);
+      signedUrl = sg?.signedUrl ?? null;
+    }
+    return { id: q.id, kind: q.kind, price_pence: q.price_pence, caption: q.caption ?? "", position: q.position, signedUrl, unlockedCount: unlockByItem.get(q.id) ?? 0 };
+  }));
 
   // Reply queue: needs a reply, OLDEST waiting first. Everyone else by latest activity.
   const newMessages = accounts
@@ -205,6 +243,12 @@ export default async function AdminPage() {
         <section>
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Content</h2>
           <ContentManager items={contentItems} />
+        </section>
+
+        {/* Content queue — shared library dripped to fans one at a time */}
+        <section>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Content queue</h2>
+          <QueueManager items={queueItems} />
         </section>
 
         {/* Messages — review AI drafts, reply, send paid content */}

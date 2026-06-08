@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { getViewerEntitlements, loadViewableFeed } from "@/lib/content/store";
-import { ProtectedMedia } from "@/components/protected-media";
+import { PortalFeed, type FeedItem } from "./portal-feed";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 
@@ -46,25 +46,7 @@ export default async function PortalPage() {
             {!ent.tier && <p className="mt-2 text-sm">Join a membership to unlock content, or visit the Vault.</p>}
           </div>
         ) : (
-          <div className="space-y-8">
-            {feed.map((item) => (
-              <article key={item.id} className="rounded-2xl border border-neutral-800 overflow-hidden">
-                <div className="flex items-center justify-between px-5 pt-4 text-xs">
-                  <span className="rounded-full border border-amber-500/40 px-2.5 py-0.5 uppercase tracking-wide text-amber-400">{TIER_NAME[item.min_tier] ?? item.min_tier}</span>
-                  {!item.live && <span className="text-neutral-500">from the Vault</span>}
-                </div>
-                <div className="px-5 pt-3">
-                  <h2 className="text-xl font-semibold">{item.title}</h2>
-                  {item.caption && <p className="mt-1 text-sm text-neutral-400">{item.caption}</p>}
-                </div>
-                <div className="mt-3 grid gap-1 p-2 sm:grid-cols-2">
-                  {item.media.map((m, i) => (
-                    <ProtectedMedia key={i} kind={m.kind} url={m.url} alt={item.title} watermark={user.email ?? "members only"} />
-                  ))}
-                </div>
-              </article>
-            ))}
-          </div>
+          <PortalFeed items={feed as FeedItem[]} watermark={user.email ?? "members only"} />
         )}
       </main>
       <SiteFooter />

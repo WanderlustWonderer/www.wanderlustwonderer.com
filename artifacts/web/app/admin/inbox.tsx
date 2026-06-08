@@ -10,6 +10,7 @@ interface Conv {
   id: string; email: string; messages: Msg[];
   latestDraftId: string | null; latestDraft: string | null;
   needsReply?: boolean; oldestUnansweredAt?: string | null;
+  queue?: { photoUnlocked: number; videoUnlocked: number; photoRemaining: number; videoRemaining: number };
 }
 
 function waitingSince(iso: string | null | undefined): string {
@@ -116,6 +117,16 @@ function Thread({ conv, defaultOpen = false, highlight = false }: { conv: Conv; 
         )}
       </summary>
       <div className="space-y-3 border-t border-neutral-800 px-4 py-3">
+        {conv.queue && (conv.queue.photoUnlocked + conv.queue.videoUnlocked + conv.queue.photoRemaining + conv.queue.videoRemaining > 0) && (
+          <div className="flex flex-wrap gap-2 text-[11px]">
+            <span className="rounded-full bg-neutral-800 px-2.5 py-1 text-neutral-300">
+              Queue bought: {conv.queue.photoUnlocked} photo{conv.queue.photoUnlocked === 1 ? "" : "s"} · {conv.queue.videoUnlocked} video{conv.queue.videoUnlocked === 1 ? "" : "s"}
+            </span>
+            <span className="rounded-full border border-neutral-700 px-2.5 py-1 text-neutral-500">
+              {conv.queue.photoRemaining} photo{conv.queue.photoRemaining === 1 ? "" : "s"} · {conv.queue.videoRemaining} video{conv.queue.videoRemaining === 1 ? "" : "s"} left for them
+            </span>
+          </div>
+        )}
         <div className="max-h-72 space-y-2 overflow-y-auto">
           {conv.messages.map((m) => (
             <div key={m.id} className={m.role === "fan" ? "text-right" : "text-left"}>

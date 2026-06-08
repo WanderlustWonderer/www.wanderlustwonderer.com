@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { ChatView, type ChatMessage } from "@/components/companion/ChatView";
+import { ChatView, type ChatMessage, type QueueSummary, type QueueKind } from "@/components/companion/ChatView";
 import { balances } from "@/lib/wallet/ledger";
 import { CREATOR } from "@/config/creator";
 
@@ -63,5 +63,22 @@ export default async function ChatPage() {
     );
   }
 
-  return <ChatView initialMessages={initialMessages} conversationId={conversation?.id ?? null} initialBalance={walletBalances.total} viewerLabel={user.email ?? "you"} />;
+  // ---- Shared content queue (drip): per-fan availability, no item delivered twice ----
+  const [{ data: queueItems }, { data: myQueueMsgs }] = await Promise.all([
+    admin.from("media_queue").select("id, kind, price_pence, position").eq("active", true).order("position", { ascending: true }),
+    admin.from("chat_messages").select("queue_item_id, media_kind, locked, price_pence").eq("profile_id", user.id).not("queue_item_id", "is", null),
+  ]);
+  const deliveredIds = new Set((myQueueMsgs ?? []).map((m: any) => m.queue_item_id));
+  function kindSummary(kind: "photo" | "video"): QueueKind {
+    const items = (queueItems ?? []).filter((i: any) => i.kind === kind);
+    const available = items.filter((i: any) => !deliveredIds.has(i.id));
+    const mine = (myQueueMsgs ?? []).filter((m: any) => m.media_kind === kind);
+    const unlocked = mine.filter((m: any) => m.locked === false).length;
+    const pending = mine.find((m: any) => m.locked === true) ?? null;
+    const nextPrice = pending ? (pending.price_pence ?? null) : (available[0]?.price_pence ?? null);
+    return { unlocked, remaining: available.length + (pending ? 1 : 0), nextPrice, canUnlock: !!pending || available.length > 0 };
+  }
+  const queue: QueueSummary = { photo: kindSummary("photo"), video: kindSummary("video") };
+
+  return <ChatView initialMessages={initialMessages} conversationId={conversation?.id ?? null} initialBalance={walletBalances.total} viewerLabel={user.email ?? "you"} queue={queue} />;
 }
