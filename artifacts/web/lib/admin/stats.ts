@@ -120,7 +120,7 @@ async function loadStripeSubscriptions(s: ReturnType<typeof getStripe>): Promise
       canceled.push(rep);
     }
   }
-  active.sort((a, b) => b.amountGbp - a.amountGbp);
+  active.sort((a, b) => String(a.currentPeriodEnd ?? "9999-12-31").localeCompare(String(b.currentPeriodEnd ?? "9999-12-31")));
   canceled.sort((a, b) => String(b.canceledAt ?? "").localeCompare(String(a.canceledAt ?? "")));
   const mrrGbp = active
     .filter((r) => ["active", "trialing"].includes(r.status))
