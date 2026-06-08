@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/client'
-import { TIER_PRICE_IDS, type MembershipTier } from '@/lib/stripe/tiers'
+import { TIER_PRICE_IDS, tierRank, type MembershipTier } from '@/lib/stripe/tiers'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getAppUrl } from "@/lib/app-url";
 
@@ -73,26 +73,43 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid tier' }, { status: 400 })
   }
 
-  // Already an active member → manage via billing portal, don't double-subscribe.
-  if (
-    profile?.subscription_status &&
+  const currentTier = (profile?.membership_tier as MembershipTier | null) ?? null
+  const isActiveMember =
+    !!profile?.subscription_status &&
     ['active', 'trialing'].includes(profile.subscription_status)
-  ) {
+  const targetRank = tierRank(body.tier)
+  const currentRank = tierRank(currentTier)
+  const isUpgrade = isActiveMember && targetRank > currentRank
+
+  // Active member choosing their current tier or a lower one → manage in portal
+  // (no double-subscribe, no downgrade via checkout). Upgrades are allowed.
+  if (isActiveMember && !isUpgrade) {
     return NextResponse.json(
       { error: 'already_subscribed', redirect: '/api/stripe/portal' },
       { status: 409 },
     )
   }
 
-  const session = await stripe.checkout.sessions.create({
+  const fromGallery = currentTier === 'the_gallery'
+  const sessionParams: Record<string, unknown> = {
     mode: 'subscription',
     client_reference_id: user.id,
     ...customerParams,
     line_items: [{ price: TIER_PRICE_IDS[body.tier], quantity: 1 }],
     success_url: `${appUrl}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/subscribe`,
-    allow_promotion_codes: true,
-  })
+    metadata: { upgrade: isUpgrade ? 'true' : 'false', from_tier: currentTier ?? '' },
+    subscription_data: {
+      metadata: { upgrade: isUpgrade ? 'true' : 'false', from_tier: currentTier ?? '' },
+    },
+  }
+  if (isUpgrade && fromGallery) {
+    // 15% off for Gallery members upgrading to a higher tier (forever coupon).
+    sessionParams.discounts = [{ coupon: process.env.STRIPE_UPGRADE_COUPON ?? 'GALLERY_UPGRADE_15' }]
+  } else {
+    sessionParams.allow_promotion_codes = true
+  }
 
+  const session = await stripe.checkout.sessions.create(sessionParams as never)
   return NextResponse.json({ url: session.url })
 }

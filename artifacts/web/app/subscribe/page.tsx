@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { reconcileLegacyMember } from "@/lib/stripe/reconcile";
+import { tierRank, type MembershipTier } from "@/lib/stripe/tiers";
 import { BuyButton } from "@/components/buy-button";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
@@ -110,6 +111,7 @@ export default async function SubscribePage() {
           <div className="mb-10 rounded-xl border border-amber-500/40 bg-amber-500/10 p-5 text-center">
             <p className="font-medium">
               You are already a member{tierName ? ` — ${tierName.replace(/_/g, " ")}` : ""}.
+              {tierName === "the_gallery" && " Upgrade below to save 15%."}
             </p>
             <a href="/api/stripe/portal" className="mt-1 inline-block underline">
               Manage your subscription
@@ -118,7 +120,17 @@ export default async function SubscribePage() {
         )}
 
         <div className="grid gap-8 md:grid-cols-3">
-          {TIERS.map((tier) => (
+          {TIERS.map((tier) => {
+          const rank = tierRank(tier.key as MembershipTier);
+          const curRank = tierRank((tierName as MembershipTier | null) ?? null);
+          const isCurrent = isMember && tierName === tier.key;
+          const isUpgrade = isMember && rank > curRank;
+          const isLower = isMember && rank < curRank;
+          const galleryDiscount = isUpgrade && tierName === "the_gallery";
+          const priceNum = Number(tier.price.replace(/[^0-9.]/g, ""));
+          const discountedNum = Math.round(priceNum * 0.85 * 100) / 100;
+          const fmt = (n: number) => "£" + (Number.isInteger(n) ? n : n.toFixed(2));
+          return (
             <div
               key={tier.key}
               className={`relative flex flex-col overflow-hidden rounded-2xl border p-8 ${
@@ -135,9 +147,19 @@ export default async function SubscribePage() {
               <p className="text-sm text-amber-400/90">{tier.subtitle}</p>
               <p className="mt-1 text-sm italic opacity-60">{tier.tagline}</p>
               <p className="mt-6 text-4xl font-semibold">
-                {tier.price}
+                {galleryDiscount ? (
+                  <>
+                    <span className="mr-2 text-2xl font-normal text-neutral-500 line-through">{fmt(priceNum)}</span>
+                    {fmt(discountedNum)}
+                  </>
+                ) : (
+                  tier.price
+                )}
                 <span className="text-base font-normal opacity-60"> / month</span>
               </p>
+              {galleryDiscount && (
+                <p className="mt-1 text-xs font-medium text-amber-400">Gallery member upgrade — save 15%</p>
+              )}
               <p className="mt-4 text-sm leading-relaxed text-neutral-300">{tier.essence}</p>
               <ul className="mt-6 flex-1 space-y-3 text-sm text-neutral-300">
                 {tier.features.map((feature) => (
@@ -148,12 +170,20 @@ export default async function SubscribePage() {
                 ))}
               </ul>
               <div className="mt-8">
-                {user ? (
+                {isCurrent ? (
+                  <button disabled className="block w-full rounded-full border border-amber-500/40 px-6 py-3 text-center text-sm font-medium text-amber-400/70">
+                    Your current plan
+                  </button>
+                ) : isLower ? (
+                  <button disabled className="block w-full rounded-full border border-neutral-700 px-6 py-3 text-center text-sm text-neutral-500">
+                    Included in your plan
+                  </button>
+                ) : user ? (
                   <BuyButton
                     payload={{ tier: tier.key }}
-                    label={tier.cta}
-                    featured={!!("featured" in tier && tier.featured)}
-                    disabled={isMember}
+                    label={isUpgrade ? (galleryDiscount ? "Upgrade — save 15%" : "Upgrade") : tier.cta}
+                    featured={!!("featured" in tier && tier.featured) || isUpgrade}
+                    disabled={false}
                   />
                 ) : (
                   <Link
@@ -170,7 +200,8 @@ export default async function SubscribePage() {
               </div>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
 
         <p className="mt-10 text-center text-xs opacity-50">

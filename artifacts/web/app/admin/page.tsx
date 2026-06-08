@@ -112,6 +112,8 @@ export default async function AdminPage() {
   const allThreads = accounts
     .filter((a) => a.messages.length > 0 || a.latestDraft)
     .sort((a, b) => String(b.lastActivity).localeCompare(String(a.lastActivity)));
+  // Emails that already have a conversation — "Send message" loads their thread.
+  const chatEmails = Array.from(new Set(accounts.map((a) => (a.email || "").toLowerCase())));
 
   // Booking products, open slots, and upcoming bookings for the slot manager.
   const { data: bookingProducts } = await admin
@@ -166,7 +168,7 @@ export default async function AdminPage() {
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">
             Active subscriptions ({stats.stripeSubs.active.length})
           </h2>
-          <StripeTable rows={stats.stripeSubs.active} mode="active" />
+          <StripeTable rows={stats.stripeSubs.active} mode="active" chatEmails={chatEmails} />
           {stats.stripeSubs.error && (
             <p className="mt-2 text-xs text-amber-400">Stripe: {stats.stripeSubs.error}</p>
           )}
@@ -225,7 +227,9 @@ function Stat({ label, value, accent = false }: { label: string; value: string; 
   );
 }
 
-function StripeTable({ rows, mode }: { rows: StripeSubRow[]; mode: "active" | "canceled" }) {
+function threadSlug(email: string | null): string { return (email || "").toLowerCase().replace(/[^a-z0-9]+/g, "-"); }
+
+function StripeTable({ rows, mode, chatEmails = [] }: { rows: StripeSubRow[]; mode: "active" | "canceled"; chatEmails?: string[] }) {
   if (rows.length === 0) {
     return <p className="text-sm text-neutral-500">{mode === "active" ? "No active Stripe subscriptions." : "No cancellations yet."}</p>;
   }
@@ -241,6 +245,7 @@ function StripeTable({ rows, mode }: { rows: StripeSubRow[]; mode: "active" | "c
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">{mode === "active" ? "Renews" : "Cancelled"}</th>
             <th className="px-4 py-3">Since</th>
+            {mode === "active" && <th className="px-4 py-3"></th>}
           </tr>
         </thead>
         <tbody className="divide-y divide-neutral-800">
@@ -255,6 +260,15 @@ function StripeTable({ rows, mode }: { rows: StripeSubRow[]; mode: "active" | "c
               </td>
               <td className="px-4 py-3">{mode === "active" ? date(r.currentPeriodEnd) : date(r.canceledAt)}</td>
               <td className="px-4 py-3 text-neutral-500">{date(r.created)}</td>
+              {mode === "active" && (
+                <td className="px-4 py-3">
+                  {chatEmails.includes((r.email || "").toLowerCase()) ? (
+                    <a href={`#thread-${threadSlug(r.email)}`} className="rounded-md border border-amber-500/50 px-3 py-1 text-xs font-medium text-amber-400 hover:bg-amber-500/10">Send message</a>
+                  ) : (
+                    <span className="text-xs text-neutral-600">No chat yet</span>
+                  )}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

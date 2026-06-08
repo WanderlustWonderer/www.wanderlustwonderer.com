@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toUploadable } from "@/components/heic-convert";
+
+function threadSlug(email: string): string { return (email || "").toLowerCase().replace(/[^a-z0-9]+/g, "-"); }
 
 interface Msg { id: string; role: string; content: string; kind: string; status: string; media_kind?: string | null; locked?: boolean; price_pence?: number | null; created_at?: string; }
 interface Conv {
@@ -58,6 +60,18 @@ function Thread({ conv, defaultOpen = false, highlight = false }: { conv: Conv; 
   const [kind, setKind] = useState("photo");
   const [price, setPrice] = useState(10);
   const [caption, setCaption] = useState("");
+  const ref = useRef<HTMLDetailsElement>(null);
+  const slug = threadSlug(conv.email);
+  useEffect(() => {
+    function check() {
+      if (typeof window !== "undefined" && window.location.hash === `#thread-${slug}`) {
+        if (ref.current) { ref.current.open = true; ref.current.scrollIntoView({ behavior: "smooth", block: "start" }); }
+      }
+    }
+    check();
+    window.addEventListener("hashchange", check);
+    return () => window.removeEventListener("hashchange", check);
+  }, [slug]);
 
   async function sendReply() {
     if (!reply.trim()) return;
@@ -79,7 +93,7 @@ function Thread({ conv, defaultOpen = false, highlight = false }: { conv: Conv; 
   }
 
   return (
-    <details open={defaultOpen} className={`rounded-xl border bg-neutral-900 ${highlight ? "border-amber-500/40" : "border-neutral-800"}`}>
+    <details ref={ref} id={`thread-${slug}`} open={defaultOpen} className={`scroll-mt-24 rounded-xl border bg-neutral-900 ${highlight ? "border-amber-500/40" : "border-neutral-800"}`}>
       <summary className="cursor-pointer px-4 py-3 text-sm">
         <span className="font-medium">{conv.email}</span>
         <span className="ml-3 text-neutral-500">{conv.messages.length} messages</span>

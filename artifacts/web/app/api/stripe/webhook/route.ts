@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe/client";
 import { syncSubscriptionToProfile, findUserForCustomer } from "@/lib/stripe/sync";
+import { PRICE_TO_TIER, tierRank, highestTier } from "@/lib/stripe/tiers";
 import { createClient as createMembershipAdmin } from "@supabase/supabase-js";
 import { createAdminClient } from "@/utils/supabase/admin";
 import {
@@ -166,6 +167,24 @@ async function handleMembershipCheckout(session: Stripe.Checkout.Session) {
     if (!userId) return;
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     await syncSubscriptionToProfile(userId, customerId, subscription);
+    // Upgrade hygiene: once the new (higher) subscription is live, cancel any
+    // of the customer's OTHER active subscriptions on a lower tier so they are
+    // never billed twice (also tidies pre-existing duplicate accounts).
+    try {
+      const newTierRank = tierRank(
+        highestTier(subscription.items.data.map((i) => PRICE_TO_TIER[i.price.id])),
+      );
+      const others = await stripe.subscriptions.list({ customer: customerId, status: "active", limit: 100 });
+      for (const other of others.data) {
+        if (other.id === subscription.id) continue;
+        const otherRank = tierRank(highestTier(other.items.data.map((i) => PRICE_TO_TIER[i.price.id])));
+        if (otherRank <= newTierRank) {
+          await stripe.subscriptions.cancel(other.id);
+        }
+      }
+    } catch (e) {
+      console.error("upgrade cleanup failed", e);
+    }
   } else if (session.mode === "payment") {
     const supabase = membershipAdmin();
     const customerId = stringId(session.customer);
