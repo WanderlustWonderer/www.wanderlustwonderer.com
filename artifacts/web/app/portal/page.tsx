@@ -31,6 +31,9 @@ export default async function PortalPage() {
           <p className="mt-2 opacity-70">
             {ent.tier ? `Your ${TIER_NAME[ent.tier] ?? ""} access` : "Your content"} · the last 4 weeks
           </p>
+          <p className="mx-auto mt-4 max-w-lg text-xs text-neutral-500">
+            All content here is personal and private. Every photo and video is watermarked and traceable to your account — downloading, screenshotting or sharing is strictly prohibited.
+          </p>
           <div className="mt-5 flex justify-center gap-3 text-sm">
             <Link href="/portal/vault" className="rounded-full border border-amber-500/50 px-5 py-2 text-amber-400 hover:bg-amber-500/10">Enter The Vault →</Link>
             {!ent.tier && <Link href="/subscribe" className="rounded-full bg-amber-500 px-5 py-2 font-medium text-black hover:bg-amber-400">Become a member</Link>}

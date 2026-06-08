@@ -169,7 +169,7 @@ export function ChatView({
           </div>
           <button type="submit" disabled={sending || !draft.trim()} className="btn-primary !px-6">Send</button>
         </form>
-        <p className="mt-2 text-center text-[10px] text-mute">Private messages to {CREATOR.displayName}. 18+. 1 credit per message.</p>
+        <p className="mt-2 text-center text-[10px] text-mute">Private messages to {CREATOR.displayName}. 18+. 1 credit per message. Media is watermarked and traceable to you — sharing is prohibited.</p>
       </div>
 
       {paywall && (
