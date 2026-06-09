@@ -4,7 +4,7 @@ import { EmailCapture } from "@/components/companion/EmailCapture";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-ink text-fg">
+    <div className="min-h-screen text-fg">
       {/* Nav */}
       <header className="border-b border-line">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">

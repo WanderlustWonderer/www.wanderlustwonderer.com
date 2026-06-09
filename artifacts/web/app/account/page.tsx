@@ -48,7 +48,7 @@ export default async function AccountPage() {
 
   if (!user) {
     return (
-      <div className="bg-black text-neutral-100 min-h-screen">
+      <div className="text-neutral-100 min-h-screen">
         <SiteNav />
         <main className="mx-auto max-w-3xl px-6 py-24 text-center">
           <h1 className="text-3xl font-semibold">Your Account</h1>
@@ -118,7 +118,7 @@ export default async function AccountPage() {
   });
 
   return (
-    <div className="bg-black text-neutral-100 min-h-screen">
+    <div className="text-neutral-100 min-h-screen">
       <SiteNav />
       <main className="mx-auto max-w-3xl px-6 py-16">
         <h1 className="text-4xl font-semibold tracking-tight">Your Account</h1>

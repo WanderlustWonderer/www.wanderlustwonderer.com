@@ -70,3 +70,38 @@ body {
 .glow {
   box-shadow: 0 0 80px 10px color-mix(in srgb, var(--color-accent) 18%, transparent);
 }
+
+/* ===================== Celestial Muse theme ===================== */
+body {
+  background:
+    radial-gradient(1200px 760px at 50% -8%, #2a1f6b 0%, rgba(42,31,107,0) 58%),
+    radial-gradient(900px 640px at 12% 14%, #3a1f72 0%, rgba(58,31,114,0) 55%),
+    radial-gradient(1000px 700px at 88% 18%, #25216a 0%, rgba(37,33,106,0) 55%),
+    linear-gradient(180deg, #050418 0%, #0a0830 45%, #161152 100%);
+  background-attachment: fixed;
+  color: #f5f1ff;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+/* CSS-only twinkling starfield, fixed behind all content */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image:
+    radial-gradient(1.4px 1.4px at 20% 30%, #f5f1ff 50%, transparent 60%),
+    radial-gradient(1.2px 1.2px at 70% 20%, #bfe6ff 50%, transparent 60%),
+    radial-gradient(1.6px 1.6px at 40% 70%, #ffd9a8 50%, transparent 60%),
+    radial-gradient(1.1px 1.1px at 85% 60%, #f5f1ff 50%, transparent 60%),
+    radial-gradient(1.3px 1.3px at 60% 85%, #e7d8ff 50%, transparent 60%),
+    radial-gradient(1px 1px at 10% 80%, #f5f1ff 50%, transparent 60%),
+    radial-gradient(1.2px 1.2px at 90% 35%, #bfe6ff 50%, transparent 60%),
+    radial-gradient(1px 1px at 33% 15%, #f5f1ff 50%, transparent 60%);
+  background-repeat: repeat; background-size: 600px 600px;
+  animation: cm-twinkle 6s ease-in-out infinite alternate, cm-drift 140s linear infinite;
+  opacity: .7;
+}
+@keyframes cm-twinkle { from { opacity: .45 } to { opacity: .85 } }
+@keyframes cm-drift { from { background-position: 0 0 } to { background-position: 600px 300px } }
+@media (prefers-reduced-motion: reduce) { body::before { animation: none } }
+
+/* Elegant display type for headings + wordmark */
+h1, h2, .font-display { font-family: var(--font-display), Georgia, serif; }
+.font-wordmark { font-family: var(--font-wordmark), Georgia, serif; letter-spacing: .14em; }

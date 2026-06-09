@@ -104,7 +104,7 @@ export default async function SubscribePage() {
   }
 
   return (
-    <div className="bg-black text-neutral-100 min-h-screen">
+    <div className="text-neutral-100 min-h-screen">
       <SiteNav />
       <main className="mx-auto max-w-6xl px-6 py-16">
         <header className="mb-12 text-center">

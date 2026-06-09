@@ -42,7 +42,7 @@ export default async function BookPage() {
   );
 
   return (
-    <div className="bg-black text-neutral-100 min-h-screen">
+    <div className="text-neutral-100 min-h-screen">
       <SiteNav />
       <main className="mx-auto max-w-4xl px-6 py-16">
         <header className="mb-10 text-center">

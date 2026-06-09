@@ -20,7 +20,7 @@ export default async function VaultPage() {
   const blocks = await listArchiveBlocks(admin, ent);
 
   return (
-    <div className="bg-black text-neutral-100 min-h-screen">
+    <div className="text-neutral-100 min-h-screen">
       <SiteNav />
       <main className="mx-auto max-w-3xl px-6 py-14">
         <header className="mb-8 text-center">

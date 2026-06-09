@@ -45,7 +45,7 @@ export default async function ManagePage() {
   ];
 
   return (
-    <div className="bg-black text-neutral-100 min-h-screen">
+    <div className="text-neutral-100 min-h-screen">
       <SiteNav />
       <main className="mx-auto max-w-2xl px-6 py-16">
         <h1 className="text-4xl font-semibold tracking-tight">Manage membership</h1>

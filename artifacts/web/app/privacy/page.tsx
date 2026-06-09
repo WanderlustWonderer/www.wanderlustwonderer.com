@@ -17,7 +17,7 @@ const SECTIONS: { h: string; p: string }[] = [
 
 export default function PrivacyPage() {
   return (
-    <div className="bg-black text-neutral-100 min-h-screen">
+    <div className="text-neutral-100 min-h-screen">
       <SiteNav />
       <main className="mx-auto max-w-3xl px-6 py-16">
         <h1 className="text-4xl font-semibold tracking-tight">Privacy Policy</h1>

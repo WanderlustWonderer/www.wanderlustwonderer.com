@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function MusePage() {
   return (
-    <div className="bg-black text-neutral-100 min-h-screen">
+    <div className="text-neutral-100 min-h-screen">
       <SiteNav />
       <main className="mx-auto max-w-3xl px-6 py-20">
         <h1 className="text-center text-3xl font-semibold tracking-[0.15em] uppercase">

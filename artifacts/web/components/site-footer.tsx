@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-neutral-800 bg-black text-neutral-400">
+    <footer className="border-t border-white/10 bg-[#0a0826]/40 backdrop-blur-md text-neutral-400">
       <div className="mx-auto max-w-3xl px-6 py-14 text-center space-y-6">
         <p className="text-lg font-semibold tracking-[0.2em] uppercase text-neutral-100">
           Wanderlust Wonderer

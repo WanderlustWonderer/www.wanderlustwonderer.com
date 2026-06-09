@@ -11,9 +11,9 @@ const LINKS = [
 
 export function SiteNav() {
   return (
-    <header className="border-b border-neutral-800 bg-black text-neutral-100">
+    <header className="border-b border-white/10 bg-[#0a0826]/50 backdrop-blur-md text-neutral-100">
       <div className="mx-auto max-w-6xl px-6 py-8 text-center">
-        <Link href="/" className="text-4xl font-semibold tracking-[0.2em] uppercase">
+        <Link href="/" className="font-wordmark text-4xl font-semibold tracking-[0.2em] uppercase">
           Wanderlust Wonderer
         </Link>
         <p className="mt-2 text-sm tracking-[0.35em] uppercase text-amber-400/90">
