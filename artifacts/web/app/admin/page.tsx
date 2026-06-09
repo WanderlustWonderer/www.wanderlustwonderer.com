@@ -12,6 +12,7 @@ import { AdminInbox } from "./inbox";
 import { ContentManager } from "./content-manager";
 import { QueueManager, type QueueItem } from "./queue-manager";
 import { VaultWeekTitler, type AdminWeek } from "./vault-week-titler";
+import { GdriveImporter } from "./gdrive-importer";
 import { listArchiveWeeks } from "@/lib/content/store";
 import { isLive } from "@/lib/content/vault";
 
@@ -287,6 +288,12 @@ export default async function AdminPage() {
         <section>
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Content queue</h2>
           <QueueManager items={queueItems} />
+        </section>
+
+        {/* Import content straight from Google Drive */}
+        <section>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Import from Google Drive</h2>
+          <GdriveImporter />
         </section>
 
         {/* Vault weeks — title each archived week (sold at £150/week in The Vault) */}
