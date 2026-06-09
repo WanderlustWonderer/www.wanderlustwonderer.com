@@ -2,6 +2,12 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 
+export const metadata = {
+  title: "Thank you",
+  description: "Your offering has been received.",
+  robots: { index: false, follow: false },
+};
+
 export const dynamic = 'force-dynamic'
 
 /**

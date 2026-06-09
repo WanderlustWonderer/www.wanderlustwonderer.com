@@ -3,6 +3,11 @@ import { BuyButton } from '@/components/buy-button'
 import { SiteNav } from '@/components/site-nav'
 import { SiteFooter } from '@/components/site-footer'
 
+export const metadata = {
+  title: "The Collection",
+  description: "Tributes, gifts and private moments with the Muse. One-off offerings, no subscription required.",
+};
+
 export const dynamic = 'force-dynamic'
 
 function formatGbp(pence: number): string {

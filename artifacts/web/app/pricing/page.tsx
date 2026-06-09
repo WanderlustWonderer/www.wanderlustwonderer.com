@@ -2,6 +2,11 @@ import Link from "next/link";
 import { CREATOR, CREDIT_PACKS } from "@/config/creator";
 import { CheckoutButton } from "@/components/companion/CheckoutButton";
 
+export const metadata = {
+  title: "Membership & Credits",
+  description: "Choose a membership tier or top up chat credits. Three tiers from £55/mo. 18+.",
+};
+
 export const dynamic = "force-dynamic";
 
 const MEMBERSHIPS = [

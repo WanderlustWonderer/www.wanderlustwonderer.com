@@ -2,6 +2,11 @@ import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 
+export const metadata = {
+  title: "The Practice",
+  description: "The teacher, the ritual, the return. The story behind the 365-day yoga journey.",
+};
+
 export default function PracticePage() {
   return (
     <div className="bg-black text-neutral-100 min-h-screen">

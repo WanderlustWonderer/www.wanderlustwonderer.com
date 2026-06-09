@@ -6,6 +6,11 @@ import { BuyButton } from "@/components/buy-button";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 
+export const metadata = {
+  title: "Become a Member",
+  description: "Choose your path into the members-only world — The Gallery, Private World or All Access.",
+};
+
 export const dynamic = "force-dynamic";
 
 const TIERS = [

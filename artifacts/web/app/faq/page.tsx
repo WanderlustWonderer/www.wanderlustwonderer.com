@@ -1,6 +1,11 @@
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 
+export const metadata = {
+  title: "FAQ",
+  description: "Everything you need to know about memberships, The Collection, live sessions and the Muse.",
+};
+
 const FAQS = [
   {
     q: "What is The Portal?",

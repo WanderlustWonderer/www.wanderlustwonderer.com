@@ -2,6 +2,11 @@ import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 
+export const metadata = {
+  title: "The Tribute",
+  description: "Where words end and devotion begins. An altar for pure financial devotion.",
+};
+
 export default function TributePage() {
   return (
     <div className="bg-black text-neutral-100 min-h-screen">

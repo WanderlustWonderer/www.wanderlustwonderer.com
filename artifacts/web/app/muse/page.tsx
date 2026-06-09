@@ -2,6 +2,11 @@ import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 
+export const metadata = {
+  title: "The Muse",
+  description: "The manifesto. Not an influencer — a Muse. Mystery, magic and movement, on her terms.",
+};
+
 export default function MusePage() {
   return (
     <div className="bg-black text-neutral-100 min-h-screen">

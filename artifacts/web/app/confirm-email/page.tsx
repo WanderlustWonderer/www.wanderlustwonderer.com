@@ -1,5 +1,11 @@
 import Link from "next/link";
 
+export const metadata = {
+  title: "Confirm your email",
+  description: "Confirm your email address to continue.",
+  robots: { index: false, follow: false },
+};
+
 export default function ConfirmEmailPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { signup } from "@/app/actions/auth";
 
+
 export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
