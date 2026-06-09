@@ -10,6 +10,7 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { computeAchievements, tenureLabel } from "@/lib/achievements";
 import { ProfileEditor } from "@/components/profile-editor";
+import { WaitingGame } from "@/components/waiting-game";
 
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false } };
@@ -29,6 +30,7 @@ const MONTHLY_CREDITS: Record<string, number> = {
 
 const LEDGER_LABELS: Record<string, string> = {
   signup_bonus: "Welcome credits",
+  game_reward: "Free message won ✨",
   monthly_grant: "Monthly membership credits",
   monthly_void: "Expired with renewal",
   credit_purchase: "Top-up",
@@ -137,6 +139,11 @@ export default async function AccountPage() {
               email={user.email ?? ""}
             />
           </div>
+        </section>
+
+        {/* Waiting-room game — play while the Muse replies; 1 in 5 wins a free message */}
+        <section className="mt-10">
+          <WaitingGame />
         </section>
 
         {/* Membership · content · achievements (merged) */}
