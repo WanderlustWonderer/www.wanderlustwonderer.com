@@ -75,12 +75,17 @@ export async function POST(req: Request) {
     // Who is this fan? (free guest vs paying member, and which tier) — powers the upsell.
     const { data: prof } = await admin
       .from("profiles")
-      .select("membership_tier, subscription_status")
+      .select("membership_tier, subscription_status, display_name, bio")
       .eq("id", user.id)
       .maybeSingle();
     const isMember = !!prof?.subscription_status && ["active", "trialing"].includes(prof.subscription_status as string);
     const viewer: ViewerInfo = { tier: isMember ? ((prof?.membership_tier as ViewerInfo["tier"]) ?? null) : null };
-    const draft = await generateReply(buildDraftPrompt(profile.memory_summary, viewer), history, message);
+    // Fold the fan's own profile (name + bio) into the AI's memory so the Muse personalises.
+    const selfBits: string[] = [];
+    if (prof?.display_name) selfBits.push(`He goes by "${prof.display_name}".`);
+    if (prof?.bio) selfBits.push(`In his own words: "${String(prof.bio).slice(0, 400)}".`);
+    const memory = [selfBits.join(" "), profile.memory_summary].filter(Boolean).join("\n");
+    const draft = await generateReply(buildDraftPrompt(memory, viewer), history, message);
     await admin.from("chat_messages").insert({
       conversation_id: conversationId, profile_id: user.id, role: "ai", content: draft, status: "draft", kind: "text",
     });
