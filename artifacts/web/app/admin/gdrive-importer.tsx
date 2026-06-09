@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 interface DFile { id: string; name: string; mimeType: string; size?: string; folder?: string; }
 
 const BATCH = 25;
+const FLAG = "ww_gdrive_connected";
 
 export function GdriveImporter() {
-  const [loading, setLoading] = useState(true);
+  const [connected, setConnected] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [configured, setConfigured] = useState(false);
   const [files, setFiles] = useState<DFile[]>([]);
   const [err, setErr] = useState<string | null>(null);
@@ -26,7 +28,25 @@ export function GdriveImporter() {
     } catch { setErr("Couldn't reach Google Drive."); }
     finally { setLoading(false); }
   }
-  useEffect(() => { load(); }, []);
+
+  // Only auto-load if the admin has previously connected (no background pulls otherwise).
+  useEffect(() => {
+    if (typeof window !== "undefined" && localStorage.getItem(FLAG) === "1") {
+      setConnected(true);
+      load();
+    }
+  }, []);
+
+  function connect() {
+    try { localStorage.setItem(FLAG, "1"); } catch {}
+    setConnected(true);
+    load();
+  }
+  function disconnect() {
+    try { localStorage.removeItem(FLAG); } catch {}
+    setConnected(false);
+    setFiles([]); setSel(new Set()); setErr(null); setMsg(null); setConfigured(false);
+  }
 
   // Group files by their (sub)folder name, e.g. "Week 6 : ".
   const groups = useMemo(() => {
@@ -62,7 +82,23 @@ export function GdriveImporter() {
     finally { setBusy(false); }
   }
 
-  if (loading) return <p className="text-sm text-neutral-500">Checking Google Drive connection…</p>;
+  // Not connected yet — show a connect prompt, pull nothing in the background.
+  if (!connected) {
+    return (
+      <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 text-sm text-neutral-300">
+        <p className="font-medium text-amber-400">Google Drive import</p>
+        <p className="mt-1 text-neutral-400">Not connected. Nothing is loaded from your Drive until you connect — keeping the dashboard fast.</p>
+        <button onClick={connect} className="mt-3 rounded-md bg-amber-500 px-4 py-1.5 text-xs font-medium text-black hover:bg-amber-400">Connect Google Drive</button>
+      </div>
+    );
+  }
+
+  if (loading) return (
+    <div className="flex items-center gap-3 text-sm text-neutral-500">
+      <span>Connecting to Google Drive &amp; scanning folders…</span>
+      <button onClick={disconnect} className="text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-300">Cancel</button>
+    </div>
+  );
 
   if (!configured) {
     return (
@@ -75,7 +111,10 @@ export function GdriveImporter() {
           <li>Share your content Drive folder with the service account&apos;s email (Viewer).</li>
           <li>Add two secrets in Replit: <span className="font-mono text-neutral-200">GOOGLE_SERVICE_ACCOUNT_JSON</span> (the key) and <span className="font-mono text-neutral-200">GDRIVE_FOLDER_ID</span> (the folder ID from its URL), then republish.</li>
         </ol>
-        <button onClick={load} className="mt-3 rounded-md border border-neutral-700 px-3 py-1.5 text-xs hover:border-amber-500">Re-check connection</button>
+        <div className="mt-3 flex gap-3">
+          <button onClick={load} className="rounded-md border border-neutral-700 px-3 py-1.5 text-xs hover:border-amber-500">Re-check connection</button>
+          <button onClick={disconnect} className="rounded-md border border-neutral-800 px-3 py-1.5 text-xs text-neutral-400 hover:border-neutral-600">Disconnect</button>
+        </div>
       </div>
     );
   }
@@ -96,6 +135,8 @@ export function GdriveImporter() {
           {busy ? "Importing…" : `Import ${Math.min(sel.size, BATCH)} selected`}
         </button>
         {sel.size > BATCH && <span className="text-[11px] text-neutral-500">imports {BATCH} at a time</span>}
+        <button onClick={load} className="text-xs text-neutral-500 underline underline-offset-2 hover:text-amber-400">Refresh</button>
+        <button onClick={disconnect} className="text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-300">Disconnect</button>
         {msg && <span className="text-xs text-amber-400">{msg}</span>}
       </div>
 
