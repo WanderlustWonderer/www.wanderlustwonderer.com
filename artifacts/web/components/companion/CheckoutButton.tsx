@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { track } from "@/components/analytics";
 
 export function CheckoutButton({
   kind,
@@ -19,6 +20,7 @@ export function CheckoutButton({
   async function go() {
     setLoading(true);
     setError(null);
+    track(kind === "credits" ? "credits_checkout_started" : "checkout_started", { key: itemKey });
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",

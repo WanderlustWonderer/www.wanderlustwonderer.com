@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { track } from "@/components/analytics";
 
 /**
  * 18+ interstitial. Renders nothing on the server and on first client paint
@@ -19,6 +20,7 @@ export function AgeGate() {
 
   function enter() {
     try { localStorage.setItem("ww_age_ok", "1"); } catch { /* ignore */ }
+    track("age_gate_entered");
     setConfirmed(true);
   }
 

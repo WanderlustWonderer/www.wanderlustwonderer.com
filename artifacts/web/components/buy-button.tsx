@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { track } from "@/components/analytics";
 
 /** Shared client button: POSTs to /api/stripe/checkout and redirects. */
 export function BuyButton({
@@ -21,6 +22,7 @@ export function BuyButton({
     setLoading(true)
     setError(null)
     try {
+      track('checkout_started');
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -45,6 +45,29 @@ export default async function AdminPage() {
   const admin = createAdminClient();
   const stats = await loadAdminStats(admin);
 
+  // Traffic & funnel — last 7 days from first-party analytics_events.
+  const sevenDaysAgo = new Date(Date.now() - 7 * 864e5).toISOString();
+  const { data: evRows } = await admin
+    .from("analytics_events")
+    .select("event, session_id, created_at")
+    .gte("created_at", sevenDaysAgo)
+    .limit(50000);
+  const evCounts = new Map<string, number>();
+  const sessions = new Set<string>();
+  for (const e of evRows ?? []) {
+    evCounts.set(e.event, (evCounts.get(e.event) ?? 0) + 1);
+    if (e.session_id) sessions.add(e.session_id);
+  }
+  const funnel = [
+    { label: "Visitors (sessions)", value: sessions.size },
+    { label: "Page views", value: evCounts.get("page_view") ?? 0 },
+    { label: "Signup page views", value: evCounts.get("signup_view") ?? 0 },
+    { label: "Subscribe page views", value: evCounts.get("subscribe_view") ?? 0 },
+    { label: "Checkouts started", value: (evCounts.get("checkout_started") ?? 0) + (evCounts.get("credits_checkout_started") ?? 0) },
+    { label: "Chat messages sent", value: evCounts.get("chat_message_sent") ?? 0 },
+    { label: "Age gate entered", value: evCounts.get("age_gate_entered") ?? 0 },
+  ];
+
   // Recent conversations with fan email + last message
   const { data: convs } = await admin
     .from("conversations")
@@ -200,6 +223,17 @@ export default async function AdminPage() {
           {stats.stripe.error && (
             <p className="mt-2 text-xs text-amber-400">Stripe: {stats.stripe.error}</p>
           )}
+        </section>
+
+        {/* Traffic & funnel — first-party analytics, last 7 days */}
+        <section>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Traffic &amp; funnel · last 7 days</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {funnel.map((f) => (
+              <Stat key={f.label} label={f.label} value={String(f.value)} />
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-neutral-600">First-party, cookieless session counting. Numbers build up as visitors arrive.</p>
         </section>
 
         {/* Active subscriptions — live from Stripe (source of truth for billing) */}

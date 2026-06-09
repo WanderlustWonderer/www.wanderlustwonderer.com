@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CREATOR } from "@/config/creator";
 import { createClient } from "@/utils/supabase/client";
 import { ProtectedMedia } from "@/components/protected-media";
+import { track } from "@/components/analytics";
 
 export interface ChatMessage {
   id: string;
@@ -93,6 +94,7 @@ export function ChatView({
       if (!res.ok) { setMessages((m) => m.slice(0, -1)); setDraft(message); setError("Couldn't send — try again."); return; }
       if (typeof data.balance === "number") setBalance(data.balance);
       if (data.conversationId) setConvId(data.conversationId);
+      track("chat_message_sent");
       setJustSent(true);
     } catch { setMessages((m) => m.slice(0, -1)); setDraft(message); setError("Connection hiccup. Try again."); }
     finally { setSending(false); }
