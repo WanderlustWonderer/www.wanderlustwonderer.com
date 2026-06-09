@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CREATOR } from "@/config/creator";
 import { EmailCapture } from "@/components/companion/EmailCapture";
+import { TeaserWall } from "@/components/teaser-wall";
 
 export default function LandingPage() {
   return (
@@ -85,6 +86,8 @@ export default function LandingPage() {
             <Link href="/pricing" className="btn-ghost">Full pricing →</Link>
           </div>
         </section>
+
+        <TeaserWall />
 
         {/* Email capture */}
         <section className="border-t border-line bg-panel">
