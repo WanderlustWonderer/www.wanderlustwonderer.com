@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-type Phase = "idle" | "playing" | "won" | "lose" | "capped";
+type Phase = "idle" | "playing" | "won" | "lose" | "capped" | "alreadyWon";
 
 export function WaitingGame() {
   const [phase, setPhase] = useState<Phase>("idle");
@@ -23,6 +23,7 @@ export function WaitingGame() {
       if (typeof d.balance === "number") setBalance(d.balance);
       if (typeof d.cap === "number" && typeof d.playsToday === "number") setPlaysLeft(Math.max(0, d.cap - d.playsToday));
       if (d.capped) setPhase("capped");
+      else if (d.alreadyWon) setPhase("alreadyWon");
       else setPhase(d.won ? "won" : "lose");
     } catch {
       setPhase("idle");
@@ -44,7 +45,7 @@ export function WaitingGame() {
           aria-label="Play"
           className={`text-6xl transition-transform disabled:opacity-40 ${phase === "playing" ? "animate-ping" : "hover:scale-110 active:scale-95"}`}
         >
-          {phase === "won" ? "🌟" : phase === "lose" ? "💫" : phase === "capped" ? "🌙" : "⭐"}
+          {phase === "won" ? "🌟" : phase === "lose" ? "💫" : (phase === "capped" || phase === "alreadyWon") ? "🌙" : "⭐"}
         </button>
       </div>
 
@@ -54,6 +55,7 @@ export function WaitingGame() {
         {phase === "won" && <p className="font-medium text-emerald-400">✨ You caught it — a free message is yours! Spend it in chat.</p>}
         {phase === "lose" && <p className="text-neutral-400">So close… try again 👀</p>}
         {phase === "capped" && <p className="text-neutral-400">That&apos;s all your plays for today — come back tomorrow ✨</p>}
+        {phase === "alreadyWon" && <p className="text-neutral-400">You&apos;ve already won your free message in the last 24h ✨ — come back soon.</p>}
       </div>
 
       <div className="mt-3 flex items-center justify-center gap-4 text-xs text-neutral-500">
