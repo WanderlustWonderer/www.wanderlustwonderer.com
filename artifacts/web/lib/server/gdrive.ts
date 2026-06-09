@@ -7,7 +7,7 @@ import crypto from "node:crypto";
  *   GOOGLE_SERVICE_ACCOUNT_JSON  — the full service-account JSON key
  *   GDRIVE_FOLDER_ID             — the Drive folder shared with the service account
  */
-export interface DriveFile { id: string; name: string; mimeType: string; size?: string; thumbnailLink?: string; }
+export interface DriveFile { id: string; name: string; mimeType: string; size?: string; thumbnailLink?: string; folder?: string; }
 
 export function gdriveConfigured(): boolean {
   return !!process.env.GOOGLE_SERVICE_ACCOUNT_JSON && !!process.env.GDRIVE_FOLDER_ID;
@@ -45,17 +45,55 @@ async function getAccessToken(): Promise<string> {
   return data.access_token;
 }
 
-/** List image/video files in the configured Drive folder (newest first). */
+/**
+ * List image/video files under the configured Drive folder, walking INTO
+ * subfolders (any depth) so week-folders etc. are included. Each file is
+ * tagged with its immediate parent folder name for grouping in the UI.
+ */
+const DRIVE_FOLDER_MIME = "application/vnd.google-apps.folder";
+
+async function listChildren(folderId: string, token: string): Promise<DriveFile[]> {
+  const acc: DriveFile[] = [];
+  let pageToken = "";
+  do {
+    const q = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
+    let url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=nextPageToken,files(id,name,mimeType,size,thumbnailLink)&orderBy=name&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true`;
+    if (pageToken) url += `&pageToken=${pageToken}`;
+    const res = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error(`Drive list failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
+    const data = (await res.json()) as { files?: DriveFile[]; nextPageToken?: string };
+    acc.push(...(data.files ?? []));
+    pageToken = data.nextPageToken ?? "";
+  } while (pageToken && acc.length < 5000);
+  return acc;
+}
+
 export async function listDriveFiles(): Promise<DriveFile[]> {
-  const folderId = process.env.GDRIVE_FOLDER_ID;
-  if (!folderId) throw new Error("GDRIVE_FOLDER_ID not set");
+  const rootId = process.env.GDRIVE_FOLDER_ID;
+  if (!rootId) throw new Error("GDRIVE_FOLDER_ID not set");
   const token = await getAccessToken();
-  const q = encodeURIComponent(`'${folderId}' in parents and trashed = false and (mimeType contains 'image/' or mimeType contains 'video/')`);
-  const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,size,thumbnailLink)&orderBy=createdTime desc&pageSize=200&supportsAllDrives=true&includeItemsFromAllDrives=true`;
-  const res = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
-  if (!res.ok) throw new Error(`Drive list failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
-  const data = (await res.json()) as { files?: DriveFile[] };
-  return data.files ?? [];
+
+  const out: DriveFile[] = [];
+  // Breadth-first walk through the folder tree (guarded against runaway / loops).
+  const queue: { id: string; label: string }[] = [{ id: rootId, label: "" }];
+  const seen = new Set<string>();
+  let guard = 0;
+  while (queue.length && guard < 300) {
+    guard++;
+    const { id, label } = queue.shift()!;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    let children: DriveFile[];
+    try { children = await listChildren(id, token); } catch { continue; }
+    for (const c of children) {
+      if (c.mimeType === DRIVE_FOLDER_MIME) {
+        queue.push({ id: c.id, label: c.name });
+      } else if (c.mimeType?.startsWith("image/") || c.mimeType?.startsWith("video/")) {
+        out.push({ ...c, folder: label || "Top level" });
+      }
+    }
+  }
+  return out;
 }
 
 /** Download a Drive file's bytes. */
