@@ -6,7 +6,6 @@ const LINKS = [
   { href: "/collection", label: "THE COLLECTION" },
   { href: "/book", label: "BOOK" },
   { href: "/practice", label: "THE PRACTICE" },
-  { href: "/tribute", label: "THE TRIBUTE" },
 ];
 
 export function SiteNav() {

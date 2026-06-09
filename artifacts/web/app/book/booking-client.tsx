@@ -27,7 +27,7 @@ export function BookingClient({
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productId }),
       });
-      if (res.status === 401) { window.location.href = "/login?next=/book"; return; }
+      if (res.status === 401) { window.location.href = "/signup"; return; }
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error ?? "Could not start checkout");
       window.location.href = data.url;

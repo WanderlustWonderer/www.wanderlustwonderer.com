@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { BuyButton } from '@/components/buy-button'
+import { CryptoTributeCard } from '@/components/crypto-tribute-card'
 import { SiteNav } from '@/components/site-nav'
 import { SiteFooter } from '@/components/site-footer'
 
@@ -79,6 +80,7 @@ export default async function CollectionPage() {
             </div>
           </div>
         ))}
+        <CryptoTributeCard />
       </div>
 
       <p className="mt-10 text-center text-xs opacity-50">
