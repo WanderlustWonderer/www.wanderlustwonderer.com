@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  let body: { tier?: MembershipTier; productId?: string }
+  let body: { tier?: MembershipTier; productId?: string; offer?: string }
   try {
     body = await req.json()
   } catch {
@@ -103,9 +103,13 @@ export async function POST(req: Request) {
       metadata: { upgrade: isUpgrade ? 'true' : 'false', from_tier: currentTier ?? '' },
     },
   }
+  const wantsMuse15 = body.offer === 'muse15' && !isActiveMember // first subscription only
   if (isUpgrade && fromGallery) {
     // 15% off for Gallery members upgrading to a higher tier (forever coupon).
     sessionParams.discounts = [{ coupon: process.env.STRIPE_UPGRADE_COUPON ?? 'UPGRADE15_1MO' }]
+  } else if (wantsMuse15) {
+    // MUSE15 — 15% off the first month for a new member's first subscription.
+    sessionParams.discounts = [{ coupon: process.env.MUSE15_COUPON ?? 'kLjyj5df' }]
   } else {
     sessionParams.allow_promotion_codes = true
   }

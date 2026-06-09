@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Cinzel, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import { AgeGate } from "@/components/age-gate";
+import { LeadCapture } from "@/components/lead-capture";
 import { Analytics } from "@/components/analytics";
 import { Suspense } from "react";
 
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${cormorant.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}<AgeGate /><Suspense fallback={null}><Analytics /></Suspense></body>
+      <body className="min-h-full flex flex-col">{children}<AgeGate /><LeadCapture /><Suspense fallback={null}><Analytics /></Suspense></body>
     </html>
   );
 }

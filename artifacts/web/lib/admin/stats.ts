@@ -41,12 +41,24 @@ export interface StripeSubRow {
   bounced?: boolean;
 }
 
+export interface StreamRevenue {
+  upsells7: number; upsells30: number;
+  memberships7: number; memberships30: number;
+  sessions7: number; sessions30: number;
+}
+export interface TopSpender {
+  label: string; email: string | null; totalGbp: number;
+  memberships: number; sessions: number; upsells: number;
+}
+
 export interface AdminStats {
   accounts: AccountRow[];
   totalAccounts: number;
   activeSubs: AccountRow[];
   stripeSubs: { active: StripeSubRow[]; canceled: StripeSubRow[]; error?: string };
   mrrGbp: number;
+  revenue: StreamRevenue;
+  topSpenders: TopSpender[];
   stripe: {
     availableGbp: number;
     pendingGbp: number;
@@ -198,12 +210,53 @@ export async function loadAdminStats(admin: SupabaseClient): Promise<AdminStats>
     stripe.error = err instanceof Error ? err.message : "Stripe unavailable";
   }
 
+  // --- Revenue by stream (7d rolling + 30d total) + top spenders ---
+  const rev: Record<string, number> = { upsells7: 0, upsells30: 0, memberships7: 0, memberships30: 0, sessions7: 0, sessions30: 0 };
+  const spend = new Map<string, TopSpender>();
+  const SESSION_PENCE = new Set([33300, 55500, 222200]);
+  try {
+    const s3 = getStripe();
+    const now = Math.floor(Date.now() / 1000);
+    const since30 = now - 30 * 86400;
+    const since7 = now - 7 * 86400;
+    let after: string | undefined;
+    for (let i = 0; i < 6; i++) {
+      const res: any = await s3.charges.list({ limit: 100, created: { gte: since30 }, expand: ["data.invoice"], ...(after ? { starting_after: after } : {}) });
+      for (const c of res.data as any[]) {
+        if (!c.paid || c.status !== "succeeded" || c.currency !== "gbp") continue;
+        const amt = c.amount / 100;
+        const email: string | null = c.billing_details?.email ?? c.receipt_email ?? null;
+        if (isAdmin(email)) continue;
+        const cat = c.invoice ? "memberships" : (SESSION_PENCE.has(c.amount) ? "sessions" : "upsells");
+        rev[cat + "30"] += amt;
+        if (c.created >= since7) rev[cat + "7"] += amt;
+        const key = (email || (typeof c.customer === "string" ? c.customer : "") || c.id).toLowerCase();
+        const name = c.billing_details?.name || email || "Member";
+        const cur = spend.get(key) ?? { label: name, email, totalGbp: 0, memberships: 0, sessions: 0, upsells: 0 };
+        cur.totalGbp += amt;
+        (cur as any)[cat] += amt;
+        if (!cur.email && email) cur.email = email;
+        spend.set(key, cur);
+      }
+      if (!res.has_more || res.data.length === 0) break;
+      after = res.data[res.data.length - 1].id;
+    }
+  } catch { /* breakdown best-effort */ }
+  const revenue: StreamRevenue = {
+    upsells7: rev.upsells7, upsells30: rev.upsells30,
+    memberships7: rev.memberships7, memberships30: rev.memberships30,
+    sessions7: rev.sessions7, sessions30: rev.sessions30,
+  };
+  const topSpenders = [...spend.values()].sort((a, b) => b.totalGbp - a.totalGbp).slice(0, 8);
+
   return {
     accounts,
     totalAccounts: accounts.length,
     activeSubs,
     stripeSubs,
     mrrGbp: mrrGbpFinal,
+    revenue,
+    topSpenders,
     stripe,
   };
 }

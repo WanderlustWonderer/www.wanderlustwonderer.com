@@ -23,10 +23,11 @@ export function BuyButton({
     setError(null)
     try {
       track('checkout_started');
+      const offer = typeof window !== 'undefined' ? sessionStorage.getItem('ww_offer') ?? undefined : undefined
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, offer }),
       })
       const data = await res.json()
 

@@ -230,6 +230,54 @@ export default async function AdminPage() {
           )}
         </section>
 
+        {/* Revenue by stream — 7-day rolling + 30-day total */}
+        <section>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Revenue by stream</h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              { title: "Messaging upsells", sub: "photo/video unlocks in chat", s7: stats.revenue.upsells7, s30: stats.revenue.upsells30 },
+              { title: "Memberships", sub: "recurring subscriptions", s7: stats.revenue.memberships7, s30: stats.revenue.memberships30 },
+              { title: "Live sessions", sub: "session bookings", s7: stats.revenue.sessions7, s30: stats.revenue.sessions30 },
+            ].map((r) => (
+              <div key={r.title} className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
+                <p className="text-sm font-medium text-neutral-200">{r.title}</p>
+                <p className="text-[11px] text-neutral-500">{r.sub}</p>
+                <div className="mt-3 flex items-end justify-between">
+                  <div>
+                    <p className="text-2xl font-semibold text-amber-400">{gbp(r.s7)}</p>
+                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">7-day rolling</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-semibold text-neutral-200">{gbp(r.s30)}</p>
+                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">30-day total</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-neutral-600">From Stripe charges. Memberships = subscription invoices; sessions = booking prices; upsells = in-chat unlocks &amp; one-off content.</p>
+        </section>
+
+        {/* Top spenders — last 30 days */}
+        <section>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Top spenders · last 30 days</h2>
+          {stats.topSpenders.length === 0 ? (
+            <p className="text-sm text-neutral-500">No charges in the last 30 days yet.</p>
+          ) : (
+            <ul className="divide-y divide-neutral-800 rounded-xl border border-neutral-800">
+              {stats.topSpenders.map((t, i) => (
+                <li key={t.email ?? i} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
+                  <span><span className="mr-2 text-neutral-500">#{i + 1}</span>{t.label}{t.email ? <span className="text-neutral-500"> · {t.email}</span> : null}</span>
+                  <span className="flex items-center gap-3">
+                    <span className="text-xs text-neutral-500">{[t.memberships > 0 ? `Memberships ${gbp(t.memberships)}` : null, t.sessions > 0 ? `Sessions ${gbp(t.sessions)}` : null, t.upsells > 0 ? `Upsells ${gbp(t.upsells)}` : null].filter(Boolean).join(" · ")}</span>
+                    <span className="font-semibold text-amber-400">{gbp(t.totalGbp)}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
         {/* Traffic & funnel — first-party analytics, last 7 days */}
         <section>
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Traffic &amp; funnel · last 7 days</h2>
