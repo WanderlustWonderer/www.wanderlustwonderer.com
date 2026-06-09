@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { ensureCompanionProfile } from "@/lib/companion/profile";
 import { spendCredit, refundCredit, balances } from "@/lib/wallet/ledger";
-import { buildDraftPrompt, selectHistory, type HistoryMessage } from "@/lib/companion/prompt";
+import { buildDraftPrompt, selectHistory, type HistoryMessage, type ViewerInfo } from "@/lib/companion/prompt";
 import { generateReply } from "@/lib/companion/llm";
 
 export const runtime = "nodejs";
@@ -72,7 +72,15 @@ export async function POST(req: Request) {
       .order("created_at", { ascending: true })
       .limit(200);
     const history = selectHistory((prior ?? []) as HistoryMessage[]);
-    const draft = await generateReply(buildDraftPrompt(profile.memory_summary), history, message);
+    // Who is this fan? (free guest vs paying member, and which tier) — powers the upsell.
+    const { data: prof } = await admin
+      .from("profiles")
+      .select("membership_tier, subscription_status")
+      .eq("id", user.id)
+      .maybeSingle();
+    const isMember = !!prof?.subscription_status && ["active", "trialing"].includes(prof.subscription_status as string);
+    const viewer: ViewerInfo = { tier: isMember ? ((prof?.membership_tier as ViewerInfo["tier"]) ?? null) : null };
+    const draft = await generateReply(buildDraftPrompt(profile.memory_summary, viewer), history, message);
     await admin.from("chat_messages").insert({
       conversation_id: conversationId, profile_id: user.id, role: "ai", content: draft, status: "draft", kind: "text",
     });
