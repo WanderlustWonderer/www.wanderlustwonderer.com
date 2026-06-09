@@ -1,10 +1,14 @@
 import type { MetadataRoute } from "next";
 
-/** Keep private member areas out of search engines. */
+const BASE = process.env.NEXT_PUBLIC_APP_URL ?? "https://next-tailwind-wanderlustwndr.replit.app";
+
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [
-      { userAgent: "*", allow: "/", disallow: ["/account", "/chat", "/portal", "/book", "/admin", "/api"] },
-    ],
+    rules: {
+      userAgent: "*",
+      allow: "/",
+      disallow: ["/admin", "/account", "/api", "/chat", "/portal", "/login", "/signup", "/confirm-email"],
+    },
+    sitemap: `${BASE}/sitemap.xml`,
   };
 }
