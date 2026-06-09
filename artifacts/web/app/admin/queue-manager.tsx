@@ -76,7 +76,12 @@ export function QueueManager({ items }: { items: QueueItem[] }) {
 
       <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
         <p className="mb-2 text-xs font-medium text-neutral-300">Add to queue</p>
-        <input type="file" accept="image/*,video/*" multiple onChange={(e) => onChoose(e.target.files)} className="text-xs text-neutral-300" />
+        <label className="inline-flex cursor-pointer items-center rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-black hover:bg-amber-400">
+          Choose files
+          <input type="file" accept="image/*,video/*" multiple onChange={(e) => onChoose(e.target.files)} className="hidden" />
+        </label>
+        {rows.length > 0 && <span className="ml-3 text-xs text-neutral-400">{rows.length} file{rows.length === 1 ? "" : "s"} selected</span>}
+        <p className="mt-2 text-[11px] text-neutral-500">Tip: to add Google Drive files to this queue, use Import from Google Drive below and set “Add to → Content queue”.</p>
         {rows.length > 0 && (
           <div className="mt-3 space-y-2">
             <label className="block text-xs text-neutral-400">

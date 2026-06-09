@@ -16,6 +16,8 @@ export function ContentManager({ items }: { items: Item[] }) {
   const [isVideo, setIsVideo] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const PER = 10;
 
   function onChoose(files: FileList | null) {
     setMsg(null);
@@ -82,7 +84,13 @@ export function ContentManager({ items }: { items: Item[] }) {
             <option value="private_world">Private World + above</option>
             <option value="all_access">All Access only</option>
           </select>
-          <input type="file" multiple accept="image/*,video/*" onChange={(e) => onChoose(e.target.files)} className="text-xs text-neutral-300 sm:col-span-2" />
+          <div className="sm:col-span-2">
+            <label className="inline-flex cursor-pointer items-center rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-black hover:bg-amber-400">
+              Choose files
+              <input type="file" multiple accept="image/*,video/*" onChange={(e) => onChoose(e.target.files)} className="hidden" />
+            </label>
+            {rows.length > 0 && <span className="ml-3 text-xs text-neutral-400">{rows.length} file{rows.length === 1 ? "" : "s"} selected</span>}
+          </div>
         </div>
 
         {rows.length > 0 && (
@@ -121,13 +129,20 @@ export function ContentManager({ items }: { items: Item[] }) {
         <p className="mb-2 text-sm font-medium">Published content ({items.length})</p>
         {items.length === 0 ? <p className="text-sm text-neutral-500">Nothing published yet.</p> : (
           <ul className="divide-y divide-neutral-800 rounded-xl border border-neutral-800">
-            {items.map((it) => (
+            {items.slice(page * PER, page * PER + PER).map((it) => (
               <li key={it.id} className="flex items-center justify-between px-4 py-2 text-sm">
                 <span>{it.title} · <span className="text-neutral-400">{tierName[it.min_tier] ?? it.min_tier}</span> · {it.live ? <span className="text-emerald-400">live</span> : <span className="text-neutral-500">vault</span>} · {it.published_at ? new Date(it.published_at).toLocaleDateString("en-GB") : "—"}</span>
                 <button onClick={() => del(it.id)} className="text-xs text-red-400 hover:text-red-300">Delete</button>
               </li>
             ))}
           </ul>
+        )}
+        {items.length > PER && (
+          <div className="mt-3 flex items-center justify-between text-xs text-neutral-400">
+            <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0} className="rounded-md border border-neutral-700 px-3 py-1 disabled:opacity-30">Prev</button>
+            <span>Page {page + 1} of {Math.ceil(items.length / PER)}</span>
+            <button onClick={() => setPage((p) => Math.min(Math.ceil(items.length / PER) - 1, p + 1))} disabled={page >= Math.ceil(items.length / PER) - 1} className="rounded-md border border-neutral-700 px-3 py-1 disabled:opacity-30">Next</button>
+          </div>
         )}
       </div>
     </div>

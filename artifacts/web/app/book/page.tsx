@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { listOpenSlots } from "@/lib/booking/slots";
+import { generateOpenStarts } from "@/lib/booking/availability";
 import { BookingClient } from "./booking-client";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
@@ -9,11 +9,9 @@ import { SiteFooter } from "@/components/site-footer";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Book a Session", description: "Time with the Muse, live and private. 30-minute, hour and bespoke sessions." };
 
-
 export default async function BookPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
   const admin = createAdminClient();
 
   const { data: products } = await admin
@@ -23,8 +21,17 @@ export default async function BookPage() {
     .eq("product_type", "booking")
     .order("price", { ascending: true });
 
+  // Open times come from the default rule (Mon–Fri 4–9pm UK) minus already-booked times.
+  const { data: booked } = await admin
+    .from("availability_slots")
+    .select("starts_at")
+    .eq("status", "booked")
+    .gt("starts_at", new Date().toISOString());
+  const bookedSet = new Set((booked ?? []).map((b: { starts_at: string }) => new Date(b.starts_at).toISOString()));
+  const availableStarts = generateOpenStarts(bookedSet);
+
   // Sessions the member has paid for but not yet scheduled (logged-in only).
-  let owned: Array<{ id: string; product_id: string; product_name: string; slots: Awaited<ReturnType<typeof listOpenSlots>> }> = [];
+  let owned: Array<{ id: string; product_name: string; starts: string[] }> = [];
   if (user) {
     const { data: ownedRows } = await admin
       .from("bookings")
@@ -32,14 +39,9 @@ export default async function BookPage() {
       .eq("user_id", user.id)
       .is("scheduled_at", null)
       .order("created_at", { ascending: true });
-    owned = await Promise.all(
-      (ownedRows ?? []).map(async (b: { id: string; product_id: string; products: { name: string } | null }) => ({
-        id: b.id,
-        product_id: b.product_id,
-        product_name: b.products?.name ?? "Session",
-        slots: await listOpenSlots(admin, b.product_id),
-      }))
-    );
+    owned = (ownedRows ?? []).map((b: { id: string; products: { name: string } | null }) => ({
+      id: b.id, product_name: b.products?.name ?? "Session", starts: availableStarts,
+    }));
   }
 
   return (

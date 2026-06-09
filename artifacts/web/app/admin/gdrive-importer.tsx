@@ -14,6 +14,9 @@ export function GdriveImporter() {
   const [err, setErr] = useState<string | null>(null);
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [tier, setTier] = useState("the_gallery");
+  const [dest, setDest] = useState<"content" | "queue">("content");
+  const [photoPrice, setPhotoPrice] = useState(10);
+  const [videoPrice, setVideoPrice] = useState(25);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -69,9 +72,13 @@ export function GdriveImporter() {
     if (sel.size === 0 || busy) return;
     setBusy(true); setMsg(null);
     try {
+      const ids = [...sel].slice(0, BATCH);
+      const payload = dest === "queue"
+        ? { fileIds: ids, target: "queue", photoPence: Math.round(photoPrice * 100), videoPence: Math.round(videoPrice * 100) }
+        : { fileIds: ids, minTier: tier };
       const res = await fetch("/api/admin/gdrive/import", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileIds: [...sel].slice(0, BATCH), minTier: tier }),
+        body: JSON.stringify(payload),
       });
       const d = await res.json();
       if (!res.ok) { setMsg("Import failed: " + (d.error ?? "error")); return; }
@@ -124,13 +131,26 @@ export function GdriveImporter() {
       {err && <p className="text-xs text-red-400">Drive error: {err}</p>}
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-sm text-neutral-400">{files.length} file{files.length === 1 ? "" : "s"} across {groups.length} folder{groups.length === 1 ? "" : "s"} · {sel.size} selected</span>
-        <label className="text-xs text-neutral-400">Tier:
-          <select value={tier} onChange={(e) => setTier(e.target.value)} className="ml-1 rounded-md border border-neutral-700 bg-neutral-950 px-2 py-1 text-xs text-neutral-100">
-            <option value="the_gallery">The Gallery</option>
-            <option value="private_world">Private World</option>
-            <option value="all_access">All Access</option>
+        <label className="text-xs text-neutral-400">Add to:
+          <select value={dest} onChange={(e) => setDest(e.target.value as "content" | "queue")} className="ml-1 rounded-md border border-neutral-700 bg-neutral-950 px-2 py-1 text-xs text-neutral-100">
+            <option value="content">Tiered feed</option>
+            <option value="queue">Content queue</option>
           </select>
         </label>
+        {dest === "content" ? (
+          <label className="text-xs text-neutral-400">Tier:
+            <select value={tier} onChange={(e) => setTier(e.target.value)} className="ml-1 rounded-md border border-neutral-700 bg-neutral-950 px-2 py-1 text-xs text-neutral-100">
+              <option value="the_gallery">The Gallery</option>
+              <option value="private_world">Private World</option>
+              <option value="all_access">All Access</option>
+            </select>
+          </label>
+        ) : (
+          <span className="flex items-center gap-2 text-xs text-neutral-400">
+            <label>Photo £<input type="number" min={1} value={photoPrice} onChange={(e) => setPhotoPrice(Number(e.target.value))} className="ml-1 w-16 rounded-md border border-neutral-700 bg-neutral-950 px-2 py-1 text-xs text-neutral-100" /></label>
+            <label>Video £<input type="number" min={1} value={videoPrice} onChange={(e) => setVideoPrice(Number(e.target.value))} className="ml-1 w-16 rounded-md border border-neutral-700 bg-neutral-950 px-2 py-1 text-xs text-neutral-100" /></label>
+          </span>
+        )}
         <button onClick={importSel} disabled={sel.size === 0 || busy} className="rounded-md bg-amber-500 px-4 py-1.5 text-xs font-medium text-black hover:bg-amber-400 disabled:opacity-40">
           {busy ? "Importing…" : `Import ${Math.min(sel.size, BATCH)} selected`}
         </button>
