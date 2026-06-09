@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { canView, periodKey, periodRange, isLive, type ViewerEntitlements } from "./vault";
+import { canView, periodKey, periodRange, weekKey, weekRange, isLive, type ViewerEntitlements } from "./vault";
 
 export const VAULT_FULL_PRICE = process.env.STRIPE_PRICE_VAULT_FULL ?? "price_1Tg45LFrwEdhsReHxiCeX3Cx";
 export const VAULT_BLOCK_PRICE = process.env.STRIPE_PRICE_VAULT_BLOCK ?? "price_1Tg45MFrwEdhsReHmd6Qsolg";
@@ -23,12 +23,14 @@ export async function getViewerEntitlements(admin: SupabaseClient, userId: strin
   ]);
   const active = !!profile?.subscription_status && ["active", "trialing"].includes(profile.subscription_status);
   const blocks = new Set<number>();
+  const weeks = new Set<number>();
   let vaultFull = false;
   for (const e of ents ?? []) {
     if (e.scope === "vault_full") vaultFull = true;
     else if (e.scope === "block" && e.period_key != null) blocks.add(e.period_key);
+    else if (e.scope === "week" && e.period_key != null) weeks.add(e.period_key);
   }
-  return { tier: active ? (profile?.membership_tier ?? null) : null, vaultFull, blocks };
+  return { tier: active ? (profile?.membership_tier ?? null) : null, vaultFull, blocks, weeks };
 }
 
 async function sign(admin: SupabaseClient, path: string): Promise<string | null> {
@@ -61,26 +63,44 @@ export async function loadViewableFeed(admin: SupabaseClient, ent: ViewerEntitle
   return out;
 }
 
-export interface ArchiveBlock { periodKey: number; label: string; count: number; owned: boolean; }
+export interface ArchiveWeek { weekKey: number; title: string; rangeLabel: string; count: number; owned: boolean; }
 
-/** Archived 4-week blocks available to buy (with how many items + whether owned). */
-export async function listArchiveBlocks(admin: SupabaseClient, ent: ViewerEntitlements): Promise<ArchiveBlock[]> {
-  const { data: items } = await admin
-    .from("content_items")
-    .select("published_at")
-    .not("published_at", "is", null)
-    .limit(1000);
+export const WEEK_PRICE_PENCE = 15000;        // £150 per week
+export const BULK_MIN_WEEKS = 4;              // 4+ weeks → discount
+export const BULK_DISCOUNT = 0.2;             // 20% off
+export const MAX_WEEKS_PER_ORDER = 20;
+
+/** Price (in pence) for N weeks, applying the 4+ bulk discount. */
+export function weeksPricePence(count: number): number {
+  const gross = count * WEEK_PRICE_PENCE;
+  return count >= BULK_MIN_WEEKS ? Math.round(gross * (1 - BULK_DISCOUNT)) : gross;
+}
+
+/** Archived weeks available to buy — each titled, with item count + whether owned. */
+export async function listArchiveWeeks(admin: SupabaseClient, ent: ViewerEntitlements): Promise<ArchiveWeek[]> {
+  const [{ data: items }, { data: titles }] = await Promise.all([
+    admin.from("content_items").select("published_at").not("published_at", "is", null).limit(2000),
+    admin.from("vault_weeks").select("week_key, title"),
+  ]);
+  const titleByKey = new Map<number, string>();
+  for (const t of (titles ?? []) as any[]) if (t.title) titleByKey.set(t.week_key, t.title);
+
   const counts = new Map<number, number>();
   for (const it of (items ?? []) as any[]) {
-    if (isLive(it.published_at)) continue; // live content isn't in the vault
-    const k = periodKey(it.published_at);
+    if (isLive(it.published_at)) continue; // live content isn't in the vault yet
+    const k = weekKey(it.published_at);
     counts.set(k, (counts.get(k) ?? 0) + 1);
   }
-  const blocks: ArchiveBlock[] = [];
+  const weeks: ArchiveWeek[] = [];
   for (const [k, count] of [...counts.entries()].sort((a, b) => b[0] - a[0])) {
-    const r = periodRange(k);
-    const label = `${new Date(r.startIso).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} – ${new Date(r.endIso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`;
-    blocks.push({ periodKey: k, label, count, owned: ent.vaultFull || ent.blocks.has(k) });
+    const r = weekRange(k);
+    const rangeLabel = `${new Date(r.startIso).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} – ${new Date(r.endIso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`;
+    weeks.push({
+      weekKey: k,
+      title: titleByKey.get(k) ?? `Week of ${rangeLabel}`,
+      rangeLabel, count,
+      owned: ent.vaultFull || ent.weeks.has(k),
+    });
   }
-  return blocks;
+  return weeks;
 }

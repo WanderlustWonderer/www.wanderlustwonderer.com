@@ -11,6 +11,8 @@ import { SlotManager } from "./slot-manager";
 import { AdminInbox } from "./inbox";
 import { ContentManager } from "./content-manager";
 import { QueueManager, type QueueItem } from "./queue-manager";
+import { VaultWeekTitler, type AdminWeek } from "./vault-week-titler";
+import { listArchiveWeeks } from "@/lib/content/store";
 import { isLive } from "@/lib/content/vault";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +46,8 @@ export default async function AdminPage() {
 
   const admin = createAdminClient();
   const stats = await loadAdminStats(admin);
+  const vaultWeeksRaw = await listArchiveWeeks(admin, { tier: null, vaultFull: false, blocks: new Set<number>(), weeks: new Set<number>() });
+  const adminVaultWeeks: AdminWeek[] = vaultWeeksRaw.map((w) => ({ weekKey: w.weekKey, title: w.title, rangeLabel: w.rangeLabel, count: w.count, isDefault: w.title.startsWith("Week of ") }));
 
   // Traffic & funnel — last 7 days from first-party analytics_events.
   const sevenDaysAgo = new Date(Date.now() - 7 * 864e5).toISOString();
@@ -283,6 +287,12 @@ export default async function AdminPage() {
         <section>
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Content queue</h2>
           <QueueManager items={queueItems} />
+        </section>
+
+        {/* Vault weeks — title each archived week (sold at £150/week in The Vault) */}
+        <section>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Vault weeks</h2>
+          <VaultWeekTitler weeks={adminVaultWeeks} />
         </section>
 
         {/* Messages — review AI drafts, reply, send paid content */}

@@ -322,7 +322,20 @@ async function handleVaultPurchase(session: Stripe.Checkout.Session) {
   const admin = createAdminClient();
   const userId = session.metadata?.user_id ?? session.client_reference_id;
   const scope = session.metadata?.scope;
-  if (!userId || (scope !== "vault_full" && scope !== "block")) return;
+  if (!userId) return;
+  // New per-week purchases: grant one 'week' entitlement per selected week.
+  if (scope === "weeks") {
+    const keys = String(session.metadata?.week_keys ?? "").split(",").map((k) => Number(k)).filter((k) => Number.isInteger(k));
+    for (const k of keys) {
+      const { error } = await admin.from("content_entitlements").insert({
+        profile_id: userId, scope: "week", period_key: k,
+        stripe_payment_intent_id: stringId(session.payment_intent),
+      });
+      if (error && error.code !== "23505") throw error;
+    }
+    return;
+  }
+  if (scope !== "vault_full" && scope !== "block") return;
   const periodKey = scope === "block" ? Number(session.metadata?.period_key) : null;
   // Idempotent via unique (profile_id, scope, period_key).
   const { error } = await admin.from("content_entitlements").insert({

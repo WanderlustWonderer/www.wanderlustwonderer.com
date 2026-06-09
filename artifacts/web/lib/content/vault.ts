@@ -32,10 +32,27 @@ export function periodRange(key: number): { startIso: string; endIso: string } {
   return { startIso: new Date(start).toISOString(), endIso: new Date(end).toISOString() };
 }
 
+// ── Weekly archive units (the Vault is now sold one week at a time) ──
+export const WEEK_DAYS = 7;
+
+/** Stable 7-day week index from the epoch. */
+export function weekKey(publishedAtIso: string | null): number {
+  if (!publishedAtIso) return 0;
+  const p = new Date(publishedAtIso).getTime();
+  return Math.floor((p - CONTENT_EPOCH) / (WEEK_DAYS * 86400000));
+}
+
+export function weekRange(key: number): { startIso: string; endIso: string } {
+  const start = CONTENT_EPOCH + key * WEEK_DAYS * 86400000;
+  const end = start + WEEK_DAYS * 86400000 - 1;
+  return { startIso: new Date(start).toISOString(), endIso: new Date(end).toISOString() };
+}
+
 export interface ViewerEntitlements {
   tier: string | null;        // subscription tier (null = guest/none)
-  vaultFull: boolean;          // bought Full Vault
-  blocks: Set<number>;         // period keys bought individually
+  vaultFull: boolean;          // bought Full Vault (legacy "everything")
+  blocks: Set<number>;         // legacy 28-day period keys bought individually
+  weeks: Set<number>;          // 7-day week keys bought individually
 }
 
 export interface ContentRow {
@@ -52,5 +69,6 @@ export function canView(item: ContentRow, ent: ViewerEntitlements, now: number =
   }
   // Archived: gated by vault purchases (all tiers).
   if (ent.vaultFull) return true;
-  return ent.blocks.has(periodKey(item.published_at));
+  if (ent.weeks.has(weekKey(item.published_at))) return true;
+  return ent.blocks.has(periodKey(item.published_at)); // legacy 4-week blocks
 }
