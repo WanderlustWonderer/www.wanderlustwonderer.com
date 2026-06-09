@@ -3,6 +3,7 @@ import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { reconcileLegacyMember } from "@/lib/stripe/reconcile";
 import { tierRank, type MembershipTier } from "@/lib/stripe/tiers";
 import { BuyButton } from "@/components/buy-button";
+import { CryptoPay } from "@/components/crypto-pay";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 
@@ -180,12 +181,15 @@ export default async function SubscribePage() {
                     Included in your plan
                   </button>
                 ) : user ? (
-                  <BuyButton
-                    payload={{ tier: tier.key }}
-                    label={isUpgrade ? (galleryDiscount ? "Upgrade — save 15%" : "Upgrade") : tier.cta}
-                    featured={!!("featured" in tier && tier.featured) || isUpgrade}
-                    disabled={false}
-                  />
+                  <div className="space-y-1">
+                    <BuyButton
+                      payload={{ tier: tier.key }}
+                      label={isUpgrade ? (galleryDiscount ? "Upgrade — save 15%" : "Upgrade") : tier.cta}
+                      featured={!!("featured" in tier && tier.featured) || isUpgrade}
+                      disabled={false}
+                    />
+                    <CryptoPay tier={tier.key} />
+                  </div>
                 ) : (
                   <Link
                     href="/signup"
@@ -206,7 +210,7 @@ export default async function SubscribePage() {
         </div>
 
         <p className="mt-10 text-center text-xs opacity-50">
-          Payments are processed securely by Stripe. Cancel any time from your account.
+          Card payments are processed securely by Stripe — cancel any time from your account. Prefer crypto? Pay any plan in Solana (SOL) and your access unlocks automatically once the payment confirms on-chain.
         </p>
       </main>
       <SiteFooter />
