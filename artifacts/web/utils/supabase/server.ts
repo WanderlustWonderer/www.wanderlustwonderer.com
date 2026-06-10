@@ -29,13 +29,5 @@ export async function createClient() {
   );
 }
 
-// Service-role client — bypasses RLS. Server-side only (webhook, admin sync).
-import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
-
-export function createAdminClient() {
-  return createSupabaseAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } }
-  );
-}
+// Single source of truth for the service-role client (see utils/supabase/admin.ts).
+export { createAdminClient } from "./admin";

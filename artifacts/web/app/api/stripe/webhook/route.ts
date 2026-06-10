@@ -3,7 +3,6 @@ import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe/client";
 import { syncSubscriptionToProfile, findUserForCustomer } from "@/lib/stripe/sync";
 import { PRICE_TO_TIER, tierRank, highestTier } from "@/lib/stripe/tiers";
-import { createClient as createMembershipAdmin } from "@supabase/supabase-js";
 import { createAdminClient } from "@/utils/supabase/admin";
 import {
   interpretCheckoutCompleted,
@@ -187,7 +186,7 @@ async function handleMembershipCheckout(session: Stripe.Checkout.Session) {
       console.error("upgrade cleanup failed", e);
     }
   } else if (session.mode === "payment") {
-    const supabase = membershipAdmin();
+    const supabase = createAdminClient();
     const customerId = stringId(session.customer);
     const userId =
       session.client_reference_id ??
@@ -264,13 +263,6 @@ async function handleMembershipSubscriptionChange(subscription: Stripe.Subscript
   }
 }
 
-function membershipAdmin() {
-  return createMembershipAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-    process.env.SUPABASE_SERVICE_ROLE_KEY as string,
-    { auth: { persistSession: false, autoRefreshToken: false } }
-  );
-}
 
 async function handleBookingPurchase(session: Stripe.Checkout.Session) {
   const admin = createAdminClient();
@@ -348,7 +340,7 @@ async function handleVaultPurchase(session: Stripe.Checkout.Session) {
 }
 
 async function handleTip(session: Stripe.Checkout.Session) {
-  const admin = membershipAdmin();
+  const admin = createAdminClient();
   const userId = session.metadata?.user_id ?? session.client_reference_id;
   const paymentIntent = stringId(session.payment_intent);
   if (!userId || !paymentIntent) return;
