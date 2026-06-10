@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CREATOR } from "@/config/creator";
+import { TipButton } from "@/components/tip-button";
 import { createClient } from "@/utils/supabase/client";
 import { ProtectedMedia } from "@/components/protected-media";
 import { track } from "@/components/analytics";
@@ -135,6 +136,7 @@ export function ChatView({
         </div>
         <div className="flex items-center gap-3 text-xs">
           <span className="rounded-full border border-line px-2.5 py-1 text-mute">{balance} credit{balance === 1 ? "" : "s"}</span>
+          <TipButton />
           <Link href="/account" className="text-mute hover:text-accent transition">Top up</Link>
         </div>
       </header>

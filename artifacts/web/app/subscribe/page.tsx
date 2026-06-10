@@ -104,6 +104,15 @@ export default async function SubscribePage() {
     tierName = profile?.membership_tier ?? null;
   }
 
+  // Social proof — recent momentum (shown to non-members only).
+  let recentJoins = 0;
+  try {
+    const sp = createAdminClient();
+    const { count } = await sp.from("profiles").select("id", { count: "exact", head: true })
+      .gte("created_at", new Date(Date.now() - 30 * 864e5).toISOString());
+    recentJoins = count ?? 0;
+  } catch { /* best effort */ }
+
   return (
     <div className="text-neutral-100 min-h-screen">
       <SiteNav />
@@ -111,6 +120,11 @@ export default async function SubscribePage() {
         <header className="mb-12 text-center">
           <h1 className="text-4xl font-semibold tracking-[0.1em] uppercase">Members Club</h1>
           <p className="mt-3 text-lg italic text-amber-400/90">Choose Your Path</p>
+          {!isMember && recentJoins >= 3 && (
+            <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/5 px-4 py-1.5 text-xs text-amber-300">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" /> {recentJoins} people stepped inside in the last 30 days
+            </p>
+          )}
         </header>
 
         {!isMember && (

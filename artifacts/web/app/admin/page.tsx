@@ -87,6 +87,28 @@ export default async function AdminPage() {
   const topSources = [...sourceCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
   const directSessions = Math.max(0, sessions.size - sessionSource.size);
 
+  // Going quiet — members whose last message was >7 days ago (churn risk, prioritise payers).
+  const { data: fanMsgs } = await admin.from("chat_messages")
+    .select("profile_id, created_at").eq("role", "fan").order("created_at", { ascending: false }).limit(5000);
+  const lastFanMsg = new Map<string, string>();
+  for (const m of (fanMsgs ?? []) as Array<{ profile_id: string | null; created_at: string }>) {
+    if (m.profile_id && !lastFanMsg.has(m.profile_id)) lastFanMsg.set(m.profile_id, m.created_at);
+  }
+  const quietCutoff = Date.now() - 7 * 864e5;
+  const quietIds = [...lastFanMsg.entries()].filter(([, t]) => new Date(t).getTime() < quietCutoff).map(([id]) => id);
+  const { data: quietProfilesRaw } = quietIds.length
+    ? await admin.from("profiles").select("id, email, subscription_status").in("id", quietIds)
+    : { data: [] as Array<{ id: string; email: string | null; subscription_status: string | null }> };
+  const quietMembers = ((quietProfilesRaw ?? []) as Array<{ id: string; email: string | null; subscription_status: string | null }>)
+    .filter((p) => !isAdmin(p.email))
+    .map((p) => ({
+      email: p.email ?? "member",
+      member: ["active", "trialing"].includes(p.subscription_status ?? ""),
+      days: Math.floor((Date.now() - new Date(lastFanMsg.get(p.id)!).getTime()) / 864e5),
+    }))
+    .sort((a, b) => (b.member ? 1 : 0) - (a.member ? 1 : 0) || b.days - a.days)
+    .slice(0, 12);
+
   // Recent conversations with fan email + last message
   const { data: convs } = await admin
     .from("conversations")
@@ -319,6 +341,24 @@ export default async function AdminPage() {
               <li className="flex items-center justify-between px-4 py-2 text-sm text-neutral-500">
                 <span>Direct / untagged</span><span>{directSessions} session{directSessions === 1 ? "" : "s"}</span>
               </li>
+            </ul>
+          )}
+        </section>
+
+        {/* Going quiet — re-engage before they churn */}
+        <section>
+          <h2 className="mb-1 text-sm font-semibold uppercase tracking-widest text-neutral-500">Going quiet · re-engage</h2>
+          <p className="mb-4 text-xs text-neutral-600">Members who haven&apos;t messaged in 7+ days. Paying members shown first — a warm message often saves them before they cancel.</p>
+          {quietMembers.length === 0 ? (
+            <p className="text-sm text-neutral-500">No one&apos;s gone quiet — everyone&apos;s engaged ✨</p>
+          ) : (
+            <ul className="divide-y divide-neutral-800 rounded-xl border border-neutral-800">
+              {quietMembers.map((q) => (
+                <li key={q.email} className="flex items-center justify-between px-4 py-2 text-sm">
+                  <span>{q.email}{q.member && <span className="ml-2 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] text-amber-400">paying</span>}</span>
+                  <span className="text-neutral-500">quiet {q.days}d</span>
+                </li>
+              ))}
             </ul>
           )}
         </section>
