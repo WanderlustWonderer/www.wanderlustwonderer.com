@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/client'
-import { TIER_PRICE_IDS, tierRank, type MembershipTier } from '@/lib/stripe/tiers'
+import { TIER_PRICE_IDS, TERM_PRICE_IDS, tierRank, type BillingTerm, type MembershipTier } from '@/lib/stripe/tiers'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { getAppUrl } from "@/lib/app-url";
 
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  let body: { tier?: MembershipTier; productId?: string; offer?: string }
+  let body: { tier?: MembershipTier; productId?: string; offer?: string; term?: BillingTerm }
   try {
     body = await req.json()
   } catch {
@@ -92,12 +92,14 @@ export async function POST(req: Request) {
     )
   }
 
+  const term: BillingTerm = (body.term as BillingTerm) ?? 'monthly'
+  const subPrice = isUpgrade ? TIER_PRICE_IDS[body.tier] : (TERM_PRICE_IDS[body.tier]?.[term] ?? TIER_PRICE_IDS[body.tier])
   const fromGallery = currentTier === 'the_gallery'
   const sessionParams: Record<string, unknown> = {
     mode: 'subscription',
     client_reference_id: user.id,
     ...customerParams,
-    line_items: [{ price: TIER_PRICE_IDS[body.tier], quantity: 1 }],
+    line_items: [{ price: subPrice, quantity: 1 }],
     success_url: `${appUrl}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/subscribe`,
     metadata: { upgrade: isUpgrade ? 'true' : 'false', from_tier: currentTier ?? '' },
@@ -105,7 +107,7 @@ export async function POST(req: Request) {
       metadata: { upgrade: isUpgrade ? 'true' : 'false', from_tier: currentTier ?? '' },
     },
   }
-  const wantsMuse15 = body.offer === 'muse15' && !isActiveMember // first subscription only
+  const wantsMuse15 = body.offer === 'muse15' && !isActiveMember && term === 'monthly' // first month, monthly only
   if (isUpgrade && fromGallery) {
     // 15% off for Gallery members upgrading to a higher tier (forever coupon).
     sessionParams.discounts = [{ coupon: process.env.STRIPE_UPGRADE_COUPON ?? 'UPGRADE15_1MO' }]

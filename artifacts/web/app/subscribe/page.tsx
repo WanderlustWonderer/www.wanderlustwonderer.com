@@ -122,6 +122,14 @@ export default async function SubscribePage() {
         )}
 
         <div className="grid gap-8 md:grid-cols-3">
+          {!isMember && (
+            <div className="sm:col-span-3 -mt-2 mb-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5 text-center">
+              <p className="text-sm text-amber-200">
+                <span className="font-semibold">New here? Your welcome offer:</span> use code{" "}
+                <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-amber-100">MUSE15</span> for 15% off your first month — plus free message credits the moment you join, and up to 25% off if you go 3 or 6 months. ✨
+              </p>
+            </div>
+          )}
           {TIERS.map((tier) => {
           const rank = tierRank(tier.key as MembershipTier);
           const curRank = tierRank((tierName as MembershipTier | null) ?? null);
@@ -187,6 +195,7 @@ export default async function SubscribePage() {
                       label={isUpgrade ? (galleryDiscount ? "Upgrade — save 15%" : "Upgrade") : tier.cta}
                       featured={!!("featured" in tier && tier.featured) || isUpgrade}
                       disabled={false}
+                      terms={!isMember}
                     />
                     <CryptoPay tier={tier.key} />
                   </div>
