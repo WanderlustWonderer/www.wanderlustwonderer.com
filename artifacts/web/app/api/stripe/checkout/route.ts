@@ -62,6 +62,8 @@ export async function POST(req: Request) {
       client_reference_id: user.id,
       ...customerParams,
       line_items: [{ price: product.stripe_price_id, quantity: 1 }],
+      // Save the card to the customer so repeat tips/unlocks are one-tap.
+      payment_intent_data: { setup_future_usage: 'on_session' },
       success_url: `${appUrl}/collection/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/collection`,
     })

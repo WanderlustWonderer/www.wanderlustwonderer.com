@@ -9,11 +9,13 @@ import { WinbackTable } from "./winback-table";
 import { WinbackSender } from "./winback-sender";
 import { SlotManager } from "./slot-manager";
 import { AdminInbox } from "./inbox";
+import { Broadcast } from "./broadcast";
 import { ContentManager } from "./content-manager";
 import { QueueManager, type QueueItem } from "./queue-manager";
 import { VaultWeekTitler, type AdminWeek } from "./vault-week-titler";
 import { GdriveImporter } from "./gdrive-importer";
 import { UpsellOpportunities } from "./upsell-opportunities";
+import { FunnelPanel } from "./funnel-panel";
 import { listArchiveWeeks } from "@/lib/content/store";
 import { isLive } from "@/lib/content/vault";
 
@@ -392,6 +394,8 @@ export default async function AdminPage() {
           <WinbackTable rows={stats.stripeSubs.canceled} />
         </section>
 
+        <FunnelPanel />
+
         <UpsellOpportunities accounts={stats.accounts} />
 
         {/* All accounts */}
@@ -439,6 +443,7 @@ export default async function AdminPage() {
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-200">
             Messages
           </h2>
+          <Broadcast media={queueItems.map((q: any) => ({ id: q.id, label: (q.caption || q.kind || "Media") + (q.price_pence ? ` · £${(q.price_pence/100).toFixed(0)}` : "") }))} />
           <AdminInbox newMessages={newMessages} allThreads={allThreads} />
         </section>
 
