@@ -74,7 +74,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   let { data: profile } = await admin
     .from("profiles")
-    .select("membership_tier, subscription_status, subscription_end_date, stripe_customer_id, created_at, display_name, bio, avatar_url, referral_code, referred_by")
+    .select("membership_tier, subscription_status, subscription_end_date, stripe_customer_id, created_at, display_name, bio, avatar_url, referral_code, referred_by, founder")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -83,7 +83,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     if (linked) {
       const { data } = await admin
         .from("profiles")
-        .select("membership_tier, subscription_status, subscription_end_date, stripe_customer_id, created_at, display_name, bio, avatar_url, referral_code, referred_by")
+        .select("membership_tier, subscription_status, subscription_end_date, stripe_customer_id, created_at, display_name, bio, avatar_url, referral_code, referred_by, founder")
         .eq("id", user.id)
         .maybeSingle();
       profile = data;
@@ -160,7 +160,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
         <ReferralCard code={referralCode} count={refStats.count} earned={refStats.earned} bonus={REFERRAL_BONUS} />
 
-        <LoyaltyStatus isMember={isMember} tier={tier} />
+        <LoyaltyStatus isMember={isMember} tier={tier} founder={!!profile?.founder} />
 
         <TwoFactorSetup />
 

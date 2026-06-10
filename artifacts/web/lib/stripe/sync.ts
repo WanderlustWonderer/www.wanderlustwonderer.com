@@ -1,6 +1,6 @@
 import type Stripe from 'stripe'
 import { createAdminClient } from '@/utils/supabase/server'
-import { PRICE_TO_TIER, grantsAccess, highestTier } from './tiers'
+import { PRICE_TO_TIER, grantsAccess, highestTier, ANNUAL_PRICE_IDS } from './tiers'
 
 /**
  * Core sync: write a Stripe subscription's state onto a Supabase profile.
@@ -34,15 +34,22 @@ export async function syncSubscriptionToProfile(
     subscription.items.data.map((item) => PRICE_TO_TIER[item.price.id]),
   )
 
+  const isAnnual = subscription.items.data.some((item) =>
+    ANNUAL_PRICE_IDS.includes(item.price.id),
+  )
+  const update: Record<string, unknown> = {
+    membership_tier: tier,
+    stripe_customer_id: customerId,
+    stripe_subscription_id: subscription.id,
+    subscription_status: subscription.status as never,
+    subscription_end_date: periodEnd(subscription),
+  }
+  // Annual subscribers become Founders. Never demote an existing founder.
+  if (isAnnual) update.founder = true
+
   const { error } = await supabase
     .from('profiles')
-    .update({
-      membership_tier: tier,
-      stripe_customer_id: customerId,
-      stripe_subscription_id: subscription.id,
-      subscription_status: subscription.status as never,
-      subscription_end_date: periodEnd(subscription),
-    })
+    .update(update)
     .eq('id', userId)
   if (error) throw error
 }

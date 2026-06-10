@@ -10,6 +10,7 @@ import { WinbackSender } from "./winback-sender";
 import { SlotManager } from "./slot-manager";
 import { AdminInbox } from "./inbox";
 import { Broadcast } from "./broadcast";
+import { DailyMuse } from "./daily-muse";
 import { ContentManager } from "./content-manager";
 import { QueueManager, type QueueItem } from "./queue-manager";
 import { VaultWeekTitler, type AdminWeek } from "./vault-week-titler";
@@ -443,6 +444,7 @@ export default async function AdminPage() {
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-200">
             Messages
           </h2>
+          <div className="mb-4"><DailyMuse /></div>
           <Broadcast media={queueItems.map((q: any) => ({ id: q.id, label: (q.caption || q.kind || "Media") + (q.price_pence ? ` · £${(q.price_pence/100).toFixed(0)}` : "") }))} />
           <AdminInbox newMessages={newMessages} allThreads={allThreads} />
         </section>

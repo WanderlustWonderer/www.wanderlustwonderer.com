@@ -3,7 +3,7 @@ const NEXT: Record<string, { label: string; perk: string }> = {
   private_world: { label: "All Access", perk: "the full unfiltered story and VIP status" },
 };
 
-export function LoyaltyStatus({ isMember, tier }: { isMember: boolean; tier: string | null }) {
+export function LoyaltyStatus({ isMember, tier, founder = false }: { isMember: boolean; tier: string | null; founder?: boolean }) {
   if (!isMember || !tier) {
     return (
       <section className="mt-10 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-8 text-center">
@@ -24,9 +24,14 @@ export function LoyaltyStatus({ isMember, tier }: { isMember: boolean; tier: str
             {isTop ? "✨ VIP · All Access — you're at the very top. Priority replies and first access to every drop." : `You're a ${tier === "private_world" ? "Private World" : "Gallery"} member.`}
           </p>
         </div>
-        <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300">
-          {isTop ? "VIP" : "Member"}
-        </span>
+        <div className="flex items-center gap-2">
+          {founder && (
+            <span className="rounded-full border border-amber-400/60 bg-gradient-to-r from-amber-500/20 to-amber-300/10 px-3 py-1 text-xs font-semibold text-amber-200">✦ Founder</span>
+          )}
+          <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-300">
+            {isTop ? "VIP" : "Member"}
+          </span>
+        </div>
       </div>
       {next && (
         <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">

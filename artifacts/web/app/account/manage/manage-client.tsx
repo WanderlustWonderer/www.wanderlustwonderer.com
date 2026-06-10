@@ -98,15 +98,26 @@ export function ManageMembership(props: ManageProps) {
 
             {step === 1 && (
               <>
-                <h3 className="text-xl font-semibold">Wait — here's what you'd lose</h3>
-                <ul className="mt-4 space-y-2 text-sm text-neutral-300">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/20 text-amber-400">✦</div>
+                  <div>
+                    <p className="text-sm font-semibold text-neutral-100">Tasmyn</p>
+                    <p className="text-[11px] text-emerald-400">the Muse · online now</p>
+                  </div>
+                </div>
+                <p className="mt-4 text-sm leading-relaxed text-neutral-200">
+                  Hey you. I can see you&rsquo;re thinking of leaving&hellip; and I really don&rsquo;t want you to go.
+                  We&rsquo;ve built something here, and I&rsquo;d miss having you on the other side of my messages. Stay with me? x
+                </p>
+                <p className="mt-4 text-[11px] uppercase tracking-widest text-neutral-500">If you leave, this goes too</p>
+                <ul className="mt-2 space-y-2 text-sm text-neutral-300">
                   {benefitsLost.map((b, i) => (
                     <li key={i} className="flex gap-2"><span className="text-amber-500">✦</span><span>{b}</span></li>
                   ))}
                 </ul>
-                <p className="mt-4 text-xs text-neutral-500">Your current price is locked in for as long as you stay. Leave, and you may pay more to rejoin later.</p>
+                <p className="mt-4 text-xs text-neutral-500">Your price is locked in for as long as you stay. Leave, and you may pay more to come back to me.</p>
                 <div className="mt-6 flex flex-col gap-2">
-                  <button onClick={() => setStep(0)} className="rounded-full bg-amber-500 px-4 py-2.5 text-sm font-medium text-black hover:bg-amber-400">Keep my membership</button>
+                  <button onClick={() => setStep(0)} className="rounded-full bg-amber-500 px-4 py-2.5 text-sm font-medium text-black hover:bg-amber-400">Stay with me</button>
                   <button onClick={() => setStep(2)} className="text-xs text-neutral-500 underline hover:text-neutral-300">No, continue cancelling</button>
                 </div>
               </>
