@@ -39,7 +39,7 @@ export function WinbackSender() {
         </button>
       </div>
       {msg && <p className="mt-2 text-xs text-neutral-300">{msg}</p>}
-      <p className="mt-2 text-xs text-neutral-400">Live sends to customers stay disabled until you give the go. Requires a verified sending domain.</p>
+      <p className="mt-2 text-xs text-neutral-300">Live sends to customers stay disabled until you give the go. Requires a verified sending domain.</p>
     </div>
   );
 }

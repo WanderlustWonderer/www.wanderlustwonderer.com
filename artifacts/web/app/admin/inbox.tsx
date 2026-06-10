@@ -28,7 +28,7 @@ function Ticks({ read }: { read: boolean }) {
     <span
       title={read ? "Read" : "Delivered"}
       aria-label={read ? "Read" : "Delivered"}
-      className={`ml-1 inline-flex select-none align-middle text-[11px] leading-none ${read ? "text-sky-400" : "text-neutral-400"}`}
+      className={`ml-1 inline-flex select-none align-middle text-[11px] leading-none ${read ? "text-sky-400" : "text-neutral-300"}`}
     >
       {read ? "\u2713\u2713" : "\u2713"}
     </span>
@@ -42,10 +42,10 @@ export function AdminInbox({ newMessages, allThreads }: { newMessages: Conv[]; a
         <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-400">
           New messages
           <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs">{newMessages.length}</span>
-          <span className="text-xs font-normal text-neutral-400">· oldest first</span>
+          <span className="text-xs font-normal text-neutral-300">· oldest first</span>
         </h3>
         {newMessages.length === 0 ? (
-          <p className="text-sm text-neutral-400">All caught up — nothing waiting for a reply.</p>
+          <p className="text-sm text-neutral-300">All caught up — nothing waiting for a reply.</p>
         ) : (
           <div className="space-y-3">
             {newMessages.map((c) => <Thread key={`new-${c.id}`} conv={c} defaultOpen highlight />)}
@@ -56,7 +56,7 @@ export function AdminInbox({ newMessages, allThreads }: { newMessages: Conv[]; a
       <div>
         <h3 className="mb-3 text-sm font-semibold text-neutral-300">All conversations ({allThreads.length})</h3>
         {allThreads.length === 0 ? (
-          <p className="text-sm text-neutral-400">No conversations yet.</p>
+          <p className="text-sm text-neutral-300">No conversations yet.</p>
         ) : (
           <div className="space-y-3">
             {allThreads.map((c) => <Thread key={`all-${c.id}`} conv={c} />)}
@@ -110,7 +110,7 @@ function Thread({ conv, defaultOpen = false, highlight = false }: { conv: Conv; 
     <details ref={ref} id={`thread-${slug}`} open={defaultOpen} className={`scroll-mt-24 rounded-xl border bg-neutral-900 ${highlight ? "border-amber-500/40" : "border-neutral-800"}`}>
       <summary className="cursor-pointer px-4 py-3 text-sm">
         <span className="font-medium">{conv.email}</span>
-        <span className="ml-3 text-neutral-400">{conv.messages.length} messages</span>
+        <span className="ml-3 text-neutral-300">{conv.messages.length} messages</span>
         {conv.latestDraft && <span className="ml-3 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs text-amber-400">draft ready</span>}
         {conv.needsReply && conv.oldestUnansweredAt && (
           <span className="ml-3 rounded-full bg-red-500/15 px-2 py-0.5 text-xs text-red-400">{waitingSince(conv.oldestUnansweredAt)}</span>
@@ -122,7 +122,7 @@ function Thread({ conv, defaultOpen = false, highlight = false }: { conv: Conv; 
             <span className="rounded-full bg-neutral-800 px-2.5 py-1 text-neutral-300">
               Queue bought: {conv.queue.photoUnlocked} photo{conv.queue.photoUnlocked === 1 ? "" : "s"} · {conv.queue.videoUnlocked} video{conv.queue.videoUnlocked === 1 ? "" : "s"}
             </span>
-            <span className="rounded-full border border-neutral-700 px-2.5 py-1 text-neutral-400">
+            <span className="rounded-full border border-neutral-700 px-2.5 py-1 text-neutral-300">
               {conv.queue.photoRemaining} photo{conv.queue.photoRemaining === 1 ? "" : "s"} · {conv.queue.videoRemaining} video{conv.queue.videoRemaining === 1 ? "" : "s"} left for them
             </span>
           </div>

@@ -101,9 +101,9 @@ export function GdriveImporter() {
   }
 
   if (loading) return (
-    <div className="flex items-center gap-3 text-sm text-neutral-400">
+    <div className="flex items-center gap-3 text-sm text-neutral-300">
       <span>Connecting to Google Drive &amp; scanning folders…</span>
-      <button onClick={disconnect} className="text-xs text-neutral-400 underline underline-offset-2 hover:text-neutral-300">Cancel</button>
+      <button onClick={disconnect} className="text-xs text-neutral-300 underline underline-offset-2 hover:text-neutral-300">Cancel</button>
     </div>
   );
 
@@ -154,9 +154,9 @@ export function GdriveImporter() {
         <button onClick={importSel} disabled={sel.size === 0 || busy} className="rounded-md bg-amber-500 px-4 py-1.5 text-xs font-medium text-black hover:bg-amber-400 disabled:opacity-40">
           {busy ? "Importing…" : `Import ${Math.min(sel.size, BATCH)} selected`}
         </button>
-        {sel.size > BATCH && <span className="text-[11px] text-neutral-400">imports {BATCH} at a time</span>}
-        <button onClick={load} className="text-xs text-neutral-400 underline underline-offset-2 hover:text-amber-400">Refresh</button>
-        <button onClick={disconnect} className="text-xs text-neutral-400 underline underline-offset-2 hover:text-neutral-300">Disconnect</button>
+        {sel.size > BATCH && <span className="text-[11px] text-neutral-300">imports {BATCH} at a time</span>}
+        <button onClick={load} className="text-xs text-neutral-300 underline underline-offset-2 hover:text-amber-400">Refresh</button>
+        <button onClick={disconnect} className="text-xs text-neutral-300 underline underline-offset-2 hover:text-neutral-300">Disconnect</button>
         {msg && <span className="text-xs text-amber-400">{msg}</span>}
       </div>
 
@@ -167,7 +167,7 @@ export function GdriveImporter() {
           return (
             <div key={name}>
               <div className="mb-1.5 flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wide text-amber-400/90">{name.trim() || "Top level"} <span className="font-normal text-neutral-400">· {gfiles.length}</span></span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-amber-400/90">{name.trim() || "Top level"} <span className="font-normal text-neutral-300">· {gfiles.length}</span></span>
                 <button onClick={() => toggleGroup(ids, allOn)} className="text-[11px] text-neutral-300 underline underline-offset-2 hover:text-amber-400">
                   {allOn ? "Clear folder" : "Select all"}
                 </button>
@@ -180,7 +180,7 @@ export function GdriveImporter() {
                     <label key={f.id} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-2 ${checked ? "border-amber-500/50 bg-amber-500/10" : "border-neutral-800 bg-neutral-900 hover:border-neutral-700"}`}>
                       <input type="checkbox" checked={checked} onChange={() => toggle(f.id)} className="h-4 w-4 accent-amber-500" />
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-neutral-950 text-neutral-300">{isVideo ? "▶" : "▣"}</span>
-                      <span className="min-w-0 flex-1"><span className="block truncate text-sm text-neutral-200">{f.name}</span><span className="text-[11px] text-neutral-400">{isVideo ? "Video" : "Photo"}</span></span>
+                      <span className="min-w-0 flex-1"><span className="block truncate text-sm text-neutral-200">{f.name}</span><span className="text-[11px] text-neutral-300">{isVideo ? "Video" : "Photo"}</span></span>
                     </label>
                   );
                 })}
@@ -189,7 +189,7 @@ export function GdriveImporter() {
           );
         })}
       </div>
-      {files.length === 0 && <p className="text-sm text-neutral-400">No image/video files found in the shared Drive folder or its subfolders.</p>}
+      {files.length === 0 && <p className="text-sm text-neutral-300">No image/video files found in the shared Drive folder or its subfolders.</p>}
     </div>
   );
 }

@@ -52,7 +52,7 @@ export function SlotManager({
 
       <div>
         <p className="mb-2 text-sm font-medium">Awaiting your confirmation ({pending.length})</p>
-        {pending.length === 0 ? <p className="text-sm text-neutral-400">Nothing waiting.</p> : (
+        {pending.length === 0 ? <p className="text-sm text-neutral-300">Nothing waiting.</p> : (
           <ul className="divide-y divide-neutral-800 rounded-xl border border-neutral-800">
             {pending.map((b) => (
               <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
@@ -82,7 +82,7 @@ export function SlotManager({
                 <span>{fmt(b.scheduled_at)} · {b.product_name} · <span className="text-neutral-300">{b.email}</span></span>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-emerald-400">Confirmed ✓</span>
-                  <button onClick={() => setMeeting(b.id, b.meeting_url)} disabled={busy === b.id} className="text-xs text-neutral-400 hover:text-amber-300">
+                  <button onClick={() => setMeeting(b.id, b.meeting_url)} disabled={busy === b.id} className="text-xs text-neutral-300 hover:text-amber-300">
                     {b.meeting_url ? "Edit link" : "Add link"}
                   </button>
                 </div>

@@ -81,7 +81,7 @@ export function QueueManager({ items }: { items: QueueItem[] }) {
           <input type="file" accept="image/*,video/*" multiple onChange={(e) => onChoose(e.target.files)} className="hidden" />
         </label>
         {rows.length > 0 && <span className="ml-3 text-xs text-neutral-300">{rows.length} file{rows.length === 1 ? "" : "s"} selected</span>}
-        <p className="mt-2 text-[11px] text-neutral-400">Tip: to add Google Drive files to this queue, use Import from Google Drive below and set “Add to → Content queue”.</p>
+        <p className="mt-2 text-[11px] text-neutral-300">Tip: to add Google Drive files to this queue, use Import from Google Drive below and set “Add to → Content queue”.</p>
         {rows.length > 0 && (
           <div className="mt-3 space-y-2">
             <label className="block text-xs text-neutral-300">
@@ -91,7 +91,7 @@ export function QueueManager({ items }: { items: QueueItem[] }) {
             </label>
             {rows.map((r) => (
               <div key={r.id} className="flex items-center gap-2">
-                <span className="text-xs text-neutral-400 truncate max-w-[40%]">{r.file.name}</span>
+                <span className="text-xs text-neutral-300 truncate max-w-[40%]">{r.file.name}</span>
                 <input value={r.caption} onChange={(e) => setCaption(r.id, e.target.value)} placeholder="caption (optional)"
                   className="flex-1 rounded-md border border-neutral-700 bg-neutral-950 px-2 py-1 text-xs text-neutral-100" />
               </div>
@@ -111,14 +111,14 @@ export function QueueManager({ items }: { items: QueueItem[] }) {
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {items.map((it) => (
               <div key={it.id} className="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900 p-2">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-neutral-800 bg-neutral-950 text-[10px] text-neutral-400">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-neutral-800 bg-neutral-950 text-[10px] text-neutral-300">
                   {it.kind === "photo" && it.signedUrl
                     ? <img src={it.signedUrl} alt="" className="h-full w-full object-cover" />
                     : (it.kind === "video" ? "▶ video" : "photo")}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs text-neutral-200">{it.caption || (it.kind === "video" ? "Video" : "Photo")}</p>
-                  <p className="text-[11px] text-neutral-400">{gbp(it.price_pence)} · unlocked by {it.unlockedCount} fan{it.unlockedCount === 1 ? "" : "s"}</p>
+                  <p className="text-[11px] text-neutral-300">{gbp(it.price_pence)} · unlocked by {it.unlockedCount} fan{it.unlockedCount === 1 ? "" : "s"}</p>
                 </div>
                 <button onClick={() => remove(it.id)} className="shrink-0 rounded-md border border-neutral-700 px-2 py-1 text-[11px] text-neutral-300 hover:border-red-500 hover:text-red-400">Remove</button>
               </div>
