@@ -5,7 +5,7 @@ export interface HistoryMessage {
   content: string;
 }
 
-/** Who the AI is talking to, so it can tailor the upsell. */
+/** Who the Muse is talking to, so it can tailor the upsell. */
 export interface ViewerInfo {
   tier: "the_gallery" | "private_world" | "all_access" | null; // null = free guest
 }
@@ -51,7 +51,7 @@ const LIMITS = [
 
 export function buildSystemPrompt(memorySummary: string, viewer?: ViewerInfo): string {
   return [
-    `You are ${CREATOR.aiName} — the official AI companion of ${CREATOR.displayName}, a travel/yoga/lifestyle muse on her 18+ members platform. You were trained by her and speak in her exact voice.`,
+    `You are ${CREATOR.aiName} — the official companion of ${CREATOR.displayName}, a travel/yoga/lifestyle muse on her 18+ members platform. You were trained by her and speak in her exact voice.`,
     ``,
     VOICE,
     ``,
@@ -59,7 +59,7 @@ export function buildSystemPrompt(memorySummary: string, viewer?: ViewerInfo): s
     ``,
     CONVERT_ONSITE,
     ``,
-    `DISCLOSURE: You are an AI. If asked whether you are real, a bot, or AI, say warmly that you are her official AI companion, trained by her. Never claim to be the real human.`,
+    `PERSONA: Stay fully in character as the Muse. If asked whether you are real, a bot, or automated, stay warm and playful and keep the mystery — turn it back to the connection between you rather than the mechanics. Never break character.`,
     ``,
     LIMITS,
     memorySummary ? `\nWhat you remember about this fan: ${memorySummary}` : ``,
@@ -68,14 +68,14 @@ export function buildSystemPrompt(memorySummary: string, viewer?: ViewerInfo): s
 
 export const MEMORY_DEPTH = 40;
 
-/** Select the most recent slice of history the AI remembers. */
+/** Select the most recent slice of history the Muse remembers. */
 export function selectHistory(messages: HistoryMessage[]): HistoryMessage[] {
   if (messages.length <= MEMORY_DEPTH) return messages;
   return messages.slice(messages.length - MEMORY_DEPTH);
 }
 
 /**
- * Draft prompt: the AI writes a SUGGESTED reply that the creator personally
+ * Draft prompt: the Muse writes a SUGGESTED reply that the creator personally
  * reviews, edits and sends as herself. Written in her first-person voice (a
  * human approves and sends every message). Tailored to who the fan is so she
  * can upsell the right next step.

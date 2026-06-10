@@ -139,7 +139,7 @@ function Thread({ conv, defaultOpen = false, highlight = false }: { conv: Conv; 
         </div>
 
         <div>
-          <label className="text-xs text-neutral-400">Your reply{conv.latestDraft ? " (AI draft — edit freely)" : ""}</label>
+          <label className="text-xs text-neutral-400">Your reply{conv.latestDraft ? " (Draft — edit freely)" : ""}</label>
           <textarea value={reply} onChange={(e) => setReply(e.target.value)} rows={2}
             className="mt-1 w-full rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100" placeholder="Write your message…" />
           <button onClick={sendReply} disabled={busy || !reply.trim()} className="mt-2 rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-black hover:bg-amber-400 disabled:opacity-40">Send reply</button>

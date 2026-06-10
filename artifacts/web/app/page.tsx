@@ -33,9 +33,8 @@ export default function LandingPage() {
             <span className="text-accent">Any hour. Any mood.</span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg text-mute">
-            I trained my own AI on my voice, my world, my energy — so the
-            conversation never has to stop. Flirty, funny, always awake. Openly
-            AI, unmistakably me.
+            I pour my voice, my world, my energy into every conversation — so
+            it never has to stop. Flirty, funny, always awake — unmistakably me.
           </p>
           <div className="mt-10 flex items-center justify-center gap-4">
             <Link href="/chat" className="btn-primary glow">
@@ -56,7 +55,7 @@ export default function LandingPage() {
             {[
               { q: "“good morning… tell me where you'd take me first in Bali”", a: "Barefoot to the rice terraces before the world wakes up. Then I'd decide if you've earned breakfast. 🌅" },
               { q: "“I had the worst day”", a: "Then stop. Breathe in for four with me. I'm not going anywhere — tell me everything." },
-              { q: "“are you actually real?”", a: "I'm her AI — trained by her, in her voice. The mystery is real; the disclosure is too. ✨" },
+              { q: "“are you actually real?”", a: "The mystery is the point 👀 Step inside and find out for yourself. ✨" },
             ].map((t) => (
               <div key={t.q} className="rounded-2xl border border-line bg-panel-2 p-5">
                 <p className="text-sm text-mute">{t.q}</p>
@@ -103,8 +102,7 @@ export default function LandingPage() {
       <footer className="border-t border-line">
         <div className="mx-auto max-w-5xl space-y-4 px-6 py-12 text-center text-xs text-mute">
           <p className="font-medium text-fg">
-            18+ only. {CREATOR.aiName} is an artificial intelligence companion —
-            not a real person. All conversations are with AI.
+            18+ only. An intimate, members-only companion experience.
           </p>
           <p>
             © 2026 {CREATOR.displayName} · <Link href="/terms" className="underline hover:text-fg">Terms</Link> ·{" "}

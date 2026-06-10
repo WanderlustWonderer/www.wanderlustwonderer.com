@@ -75,7 +75,7 @@ export default function PricingPage() {
         </div>
 
         <p className="mt-16 text-center text-xs text-mute">
-          18+ only. {CREATOR.aiName} is an AI companion, not a real person. Payments processed by Stripe.
+          18+ only. {CREATOR.aiName} is a members-only companion experience. Payments processed by Stripe.
         </p>
       </main>
     </div>

@@ -135,7 +135,7 @@ export default async function AccountPage() {
         <h1 className="text-4xl font-semibold tracking-tight">Your Account</h1>
         <p className="mt-2 text-sm opacity-60">{user.email}</p>
 
-        {/* Your profile — bio + avatar (personalises the experience + the AI) */}
+        {/* Your profile — bio + avatar (personalises the experience + the Muse) */}
         <section className="mt-10 rounded-2xl border border-neutral-700 p-8">
           <h2 className="text-lg font-semibold">Your Profile</h2>
           <p className="mt-1 text-sm opacity-60">Add a photo and a few words about yourself. It makes your time here more personal — and helps the Muse get to know you.</p>

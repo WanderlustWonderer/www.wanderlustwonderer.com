@@ -1,9 +1,9 @@
-/** Creator + monetization config for the Wanderlust AI companion platform. */
+/** Creator + monetization config for the Wanderlust Wonderer companion platform. */
 
 export const CREATOR = {
   slug: "wanderlust",
   displayName: "Wanderlust Wonderer",
-  aiName: "Wanderlust AI",
+  aiName: "The Muse",
   aiTagline: "Trained by me, always online",
   socials: {
     instagram: "https://www.instagram.com/wanderlust_wonderer/",
@@ -18,7 +18,7 @@ export interface TierConfig {
   name: string;
   priceLabel: string;
   dailyMessages: number;
-  memoryDepth: number; // how many prior messages the AI remembers
+  memoryDepth: number; // how many prior messages the Muse remembers
   blurb: string;
   features: string[];
   priceEnv?: string;
@@ -40,7 +40,7 @@ export const TIERS: Record<TierKey, TierConfig> = {
     priceLabel: "$9.99/mo",
     dailyMessages: 25,
     memoryDepth: 24,
-    blurb: "Daily conversation with the Muse's AI.",
+    blurb: "Daily conversation with the Muse.",
     features: ["25 messages every day", "Conversation memory", "Cancel anytime"],
     priceEnv: "STRIPE_PRICE_FAN",
   },

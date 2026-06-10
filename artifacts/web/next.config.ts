@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  async redirects() {
+    // Temporary: send the root landing page to /muse for now.
+    return [{ source: "/", destination: "/muse", permanent: false }];
+  },
 };
 
 export default nextConfig;

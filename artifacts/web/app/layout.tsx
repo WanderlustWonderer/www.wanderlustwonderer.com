@@ -14,7 +14,7 @@ const cormorant = Cormorant_Garamond({ variable: "--font-display", subsets: ["la
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://next-tailwind-wanderlustwndr.replit.app";
 const TITLE = "Wanderlust Wonderer — Mystery · Magic · Movement";
 const DESCRIPTION =
-  "Step through the portal into a private world of exclusive content, an AI companion that's always awake, live sessions and more. 18+ members club.";
+  "Step through the portal into a private world of exclusive content, a companion that's always awake, live sessions and more. 18+ members club.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   },
   description: DESCRIPTION,
   applicationName: "Wanderlust Wonderer",
-  keywords: ["Wanderlust Wonderer", "members club", "exclusive content", "AI companion", "yoga", "creator"],
+  keywords: ["Wanderlust Wonderer", "members club", "exclusive content", "companion", "yoga", "creator"],
   authors: [{ name: "Wanderlust Wonderer" }],
   icons: { icon: "/icon.svg", shortcut: "/icon.svg", apple: "/icon.svg" },
   openGraph: {

@@ -424,7 +424,7 @@ export default async function AdminPage() {
           <VaultWeekTitler weeks={adminVaultWeeks} />
         </section>
 
-        {/* Messages — review AI drafts, reply, send paid content */}
+        {/* Messages — review drafts, reply, send paid content */}
         <section>
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">
             Messages

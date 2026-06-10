@@ -13,7 +13,7 @@ export const MAX_MESSAGE_CHARS = 250;
  * Fan sends a private message to the creator.
  * - Costs 1 credit to send (spam control + support).
  * - The message is delivered to the creator's inbox; it is NOT auto-answered.
- * - An AI *draft* reply is generated for the creator to review/edit/send.
+ * - A *draft* reply is generated for the creator to review/edit/send.
  *   The fan never sees the draft — only replies the creator approves and sends.
  */
 export async function POST(req: Request) {
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "persist_failed" }, { status: 500 });
   }
 
-  // Generate an AI DRAFT reply for the creator to review (best-effort; never shown to the fan).
+  // Generate a DRAFT reply for the creator to review (best-effort; never shown to the fan).
   try {
     const { data: prior } = await admin
       .from("chat_messages")
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
       .maybeSingle();
     const isMember = !!prof?.subscription_status && ["active", "trialing"].includes(prof.subscription_status as string);
     const viewer: ViewerInfo = { tier: isMember ? ((prof?.membership_tier as ViewerInfo["tier"]) ?? null) : null };
-    // Fold the fan's own profile (name + bio) into the AI's memory so the Muse personalises.
+    // Fold the fan's own profile (name + bio) into the Muse's memory so she personalises.
     const selfBits: string[] = [];
     if (prof?.display_name) selfBits.push(`He goes by "${prof.display_name}".`);
     if (prof?.bio) selfBits.push(`In his own words: "${String(prof.bio).slice(0, 400)}".`);
