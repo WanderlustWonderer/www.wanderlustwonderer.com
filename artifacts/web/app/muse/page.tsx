@@ -27,7 +27,7 @@ export default function MusePage() {
           </p>
         </header>
 
-        {/* Featured FHM film */}
+        {/* Featured FHM film (silent) */}
         <figure className="mt-14 flex flex-col items-center">
           <div className="w-full max-w-[340px] overflow-hidden rounded-[1.75rem] border border-neutral-800 shadow-2xl shadow-black/60 ring-1 ring-amber-500/10">
             <video
@@ -75,7 +75,7 @@ export default function MusePage() {
               people&rsquo;s hearts and make them feel truly seen.
             </p>
             <p>
-              But my true transformation happened in 2026. While working five jobs
+              But my true transformation happened in 2025. While working five jobs
               at once, I moved into the back of my van, stripped away the noise and
               completely rebuilt myself from within.
             </p>
@@ -118,55 +118,7 @@ export default function MusePage() {
               trusting the magic of the unknown.
             </p>
           </div>
-
-          <p className="mt-12 font-display text-3xl sm:text-4xl text-neutral-100">
-            Welcome to my journey.
-          </p>
-          <p className="mt-4 text-lg italic leading-relaxed text-neutral-400">
-            Stay soft, stay curious and give yourself permission to experience the
-            beauty in everything.
-          </p>
         </article>
-
-        {/* Gallery */}
-        <div className="mt-16 grid gap-5 sm:grid-cols-2">
-          <img
-            src="https://i0.wp.com/wanderlustwonderer.com/wp-content/uploads/2026/04/IMG_2231-829x1024.jpg?ssl=1"
-            alt="Tasmyn Leigh"
-            className="w-full rounded-2xl border border-neutral-800 object-cover"
-          />
-          <img
-            src="https://i0.wp.com/wanderlustwonderer.com/wp-content/uploads/2026/04/IMG_2127.jpg?ssl=1"
-            alt="Tasmyn Leigh"
-            className="w-full rounded-2xl border border-neutral-800 object-cover"
-          />
-        </div>
-
-        {/* The Muse manifesto */}
-        <section className="mt-20 border-t border-neutral-800 pt-16">
-          <h2 className="text-center font-display text-4xl sm:text-5xl">
-            The Muse
-          </h2>
-          <div className="mx-auto mt-10 max-w-2xl space-y-6 text-lg leading-relaxed text-neutral-300">
-            <p>
-              Do not confuse me with an influencer or a content creator. I am a
-              Muse.
-            </p>
-            <p>
-              I travel where I please, I create what I desire and I exist in a
-              constant state of high-vibration luxury. My life is an ongoing
-              masterpiece of movement, magic and aesthetic.
-            </p>
-            <p>
-              I built this platform because my energy is too valuable to be consumed
-              for free on standard social media. Here, the boundaries are absolute.
-              I set the pace, I curate the atmosphere and I dictate the rules.
-            </p>
-            <p className="font-semibold text-neutral-100">
-              Here, we don&rsquo;t chase. We attract.
-            </p>
-          </div>
-        </section>
 
         {/* CTA */}
         <div className="mt-16 text-center">
@@ -176,10 +128,6 @@ export default function MusePage() {
           >
             JOIN THE JOURNEY
           </Link>
-          <p className="mt-8 italic text-neutral-400">
-            Wanderlust Wonderer —{" "}
-            <span className="text-amber-400">Unfiltered. Unrestricted.</span>
-          </p>
         </div>
       </main>
 
