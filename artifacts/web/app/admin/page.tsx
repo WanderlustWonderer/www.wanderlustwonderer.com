@@ -54,7 +54,7 @@ export default async function AdminPage() {
   const sevenDaysAgo = new Date(Date.now() - 7 * 864e5).toISOString();
   const { data: evRows } = await admin
     .from("analytics_events")
-    .select("event, session_id, created_at")
+    .select("event, session_id, created_at, props")
     .gte("created_at", sevenDaysAgo)
     .limit(50000);
   const evCounts = new Map<string, number>();
@@ -72,6 +72,20 @@ export default async function AdminPage() {
     { label: "Chat messages sent", value: evCounts.get("chat_message_sent") ?? 0 },
     { label: "Age gate entered", value: evCounts.get("age_gate_entered") ?? 0 },
   ];
+
+  // Acquisition: first-touch source per session (from utm/referrer captured at landing).
+  const sessionSource = new Map<string, string>();
+  for (const e of evRows ?? []) {
+    const attr = e.props && typeof e.props === "object" ? (e.props as { attr?: { source?: string; referrer?: string; ref?: string } }).attr : null;
+    if (e.session_id && attr) {
+      const src = (attr.source || attr.referrer || (attr.ref ? "referral" : "") || "").toString().slice(0, 40);
+      if (src && !sessionSource.has(e.session_id)) sessionSource.set(e.session_id, src);
+    }
+  }
+  const sourceCounts = new Map<string, number>();
+  for (const src of sessionSource.values()) sourceCounts.set(src, (sourceCounts.get(src) ?? 0) + 1);
+  const topSources = [...sourceCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const directSessions = Math.max(0, sessions.size - sessionSource.size);
 
   // Recent conversations with fan email + last message
   const { data: convs } = await admin
@@ -287,6 +301,26 @@ export default async function AdminPage() {
             ))}
           </div>
           <p className="mt-2 text-xs text-neutral-600">First-party, cookieless session counting. Numbers build up as visitors arrive.</p>
+        </section>
+
+        {/* Acquisition sources — where this week's visitors came from */}
+        <section>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Acquisition sources · last 7 days</h2>
+          {topSources.length === 0 ? (
+            <p className="text-sm text-neutral-500">No tagged sources yet. Add <span className="font-mono text-neutral-300">?utm_source=instagram</span> (etc.) to your ad/post links to see which campaigns drive signups.</p>
+          ) : (
+            <ul className="divide-y divide-neutral-800 rounded-xl border border-neutral-800">
+              {topSources.map(([src, n]) => (
+                <li key={src} className="flex items-center justify-between px-4 py-2 text-sm">
+                  <span className="text-neutral-200">{src}</span>
+                  <span className="text-amber-400">{n} session{n === 1 ? "" : "s"}</span>
+                </li>
+              ))}
+              <li className="flex items-center justify-between px-4 py-2 text-sm text-neutral-500">
+                <span>Direct / untagged</span><span>{directSessions} session{directSessions === 1 ? "" : "s"}</span>
+              </li>
+            </ul>
+          )}
         </section>
 
         {/* Active subscriptions — live from Stripe (source of truth for billing) */}

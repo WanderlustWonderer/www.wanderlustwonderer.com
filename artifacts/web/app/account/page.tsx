@@ -10,7 +10,9 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { computeAchievements, tenureLabel } from "@/lib/achievements";
 import { ProfileEditor } from "@/components/profile-editor";
-import { WaitingGame } from "@/components/waiting-game";
+import { ReferralCard } from "@/components/referral-card";
+import { ensureReferralCode, applyReferral, referralStats, REFERRAL_BONUS } from "@/lib/referral";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false } };
@@ -30,7 +32,7 @@ const MONTHLY_CREDITS: Record<string, number> = {
 
 const LEDGER_LABELS: Record<string, string> = {
   signup_bonus: "Welcome credits",
-  game_reward: "Free message won ✨",
+  referral_bonus: "Referral reward \u2728",
   monthly_grant: "Monthly membership credits",
   monthly_void: "Expired with renewal",
   credit_purchase: "Top-up",
@@ -69,7 +71,7 @@ export default async function AccountPage() {
 
   let { data: profile } = await admin
     .from("profiles")
-    .select("membership_tier, subscription_status, subscription_end_date, stripe_customer_id, created_at, display_name, bio, avatar_url")
+    .select("membership_tier, subscription_status, subscription_end_date, stripe_customer_id, created_at, display_name, bio, avatar_url, referral_code, referred_by")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -78,7 +80,7 @@ export default async function AccountPage() {
     if (linked) {
       const { data } = await admin
         .from("profiles")
-        .select("membership_tier, subscription_status, subscription_end_date, stripe_customer_id, created_at, display_name, bio, avatar_url")
+        .select("membership_tier, subscription_status, subscription_end_date, stripe_customer_id, created_at, display_name, bio, avatar_url, referral_code, referred_by")
         .eq("id", user.id)
         .maybeSingle();
       profile = data;
@@ -89,6 +91,12 @@ export default async function AccountPage() {
     !!profile?.subscription_status &&
     ["active", "trialing"].includes(profile.subscription_status);
   const tier = isMember ? (profile?.membership_tier ?? null) : null;
+
+  // Referral: apply any pending ?ref (rewards both sides once), ensure a code, tally stats.
+  const refCookie = (await cookies()).get("ww_ref")?.value ?? null;
+  await applyReferral(admin, user.id, (profile as { referred_by?: string | null } | null)?.referred_by ?? null, refCookie);
+  const referralCode = await ensureReferralCode(admin, user.id, (profile as { referral_code?: string | null } | null)?.referral_code ?? null);
+  const refStats = await referralStats(admin, user.id);
 
   const [wallet, { data: ledger }, { data: bookingRows }, { data: orderRows }] = await Promise.all([
     balances(admin, user.id),
@@ -141,10 +149,7 @@ export default async function AccountPage() {
           </div>
         </section>
 
-        {/* Waiting-room game — play while the Muse replies; 1 in 5 wins a free message */}
-        <section className="mt-10">
-          <WaitingGame />
-        </section>
+        <ReferralCard code={referralCode} count={refStats.count} earned={refStats.earned} bonus={REFERRAL_BONUS} />
 
         {/* Membership · content · achievements (merged) */}
         <section className="mt-10 rounded-2xl border border-neutral-700 p-8">

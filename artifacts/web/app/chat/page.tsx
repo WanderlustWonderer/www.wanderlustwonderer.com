@@ -63,6 +63,18 @@ export default async function ChatPage() {
     );
   }
 
+  // Activation: if the fan has no history yet, the Muse opens first so they engage their free credits.
+  if (initialMessages.length === 0) {
+    const OPENERS = [
+      "you found me \ud83d\udc40 i was just thinking about my next escape\u2026 tell me \u2014 where would you take me first? x",
+      "well hello, stranger \u2728 you've got my attention. what's been on your mind today?",
+      "mmm a new face \ud83d\udc40 come closer\u2026 tell me something about you i'd never guess.",
+      "i don't open the door for just anyone \ud83d\ude09 but you're here now \u2014 so, what are you hoping to find behind it?",
+    ];
+    const opener = OPENERS[Math.floor(Math.random() * OPENERS.length)];
+    initialMessages = [{ id: "opener", role: "ai", content: opener, kind: "text" } as ChatMessage];
+  }
+
   // ---- Shared content queue (drip): per-fan availability, no item delivered twice ----
   const [{ data: queueItems }, { data: myQueueMsgs }] = await Promise.all([
     admin.from("media_queue").select("id, kind, price_pence, position").eq("active", true).order("position", { ascending: true }),
