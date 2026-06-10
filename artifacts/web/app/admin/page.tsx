@@ -526,7 +526,7 @@ function Table({ rows }: { rows: AccountRow[] }) {
         <tbody className="divide-y divide-neutral-800">
           {rows.map((r) => (
             <tr key={r.id} className="hover:bg-neutral-900/50">
-              <td className="px-4 py-3">{r.email ?? "—"}</td>
+              <td className="px-4 py-3"><a href={`/admin/u/${r.id}`} className="text-amber-400 hover:underline">{r.email ?? "—"}</a></td>
               <td className="px-4 py-3">{r.membership_tier ? (TIER_NAME[r.membership_tier] ?? r.membership_tier) : "Guest"}</td>
               <td className="px-4 py-3">
                 <span className={`rounded-full px-2 py-0.5 text-xs ${statusBadge(r.subscription_status)}`}>
