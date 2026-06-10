@@ -33,6 +33,7 @@ export async function POST(req: Request) {
   let q = admin.from("profiles").select("id, membership_tier, subscription_status");
   const { data: rows } = await q.limit(100000);
   const recipients = (rows ?? []).filter((p: any) => {
+    if (p.id === user!.id) return false; // never broadcast to yourself
     const active = !!p.subscription_status && ACTIVE.includes(p.subscription_status);
     if (segment === "everyone") return true;
     if (segment === "members") return active;
