@@ -43,6 +43,7 @@ export function ChatView({
   const [paywall, setPaywall] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [justSent, setJustSent] = useState(false);
+  const [showTyping, setShowTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, justSent]);
@@ -97,6 +98,7 @@ export function ChatView({
       if (data.conversationId) setConvId(data.conversationId);
       track("chat_message_sent");
       setJustSent(true);
+      setShowTyping(true); setTimeout(() => setShowTyping(false), 6000);
     } catch { setMessages((m) => m.slice(0, -1)); setDraft(message); setError("Connection hiccup. Try again."); }
     finally { setSending(false); }
   }
@@ -128,10 +130,12 @@ export function ChatView({
     <div className="flex h-dvh flex-col bg-ink text-fg">
       <header className="flex items-center justify-between border-b border-line bg-panel px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/20 text-accent">✦</div>
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-accent/20 text-accent">✦
+            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-panel bg-emerald-400" />
+          </div>
           <div>
             <p className="text-sm font-semibold leading-tight">{CREATOR.displayName}</p>
-            <p className="text-xs text-mute leading-tight">Your private line to me</p>
+            <p className="flex items-center gap-1 text-xs leading-tight text-emerald-400"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" /> Online now</p>
           </div>
         </div>
         <div className="flex items-center gap-3 text-xs">
@@ -178,6 +182,15 @@ export function ChatView({
           );
         })}
         {sending && <div className="flex justify-end"><div className="rounded-2xl bg-accent/40 px-4 py-2.5 text-sm">sending…</div></div>}
+        {showTyping && !sending && (
+          <div className="flex justify-start">
+            <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm border border-line bg-panel-2 px-4 py-3">
+              <span className="h-2 w-2 animate-bounce rounded-full bg-mute" style={{ animationDelay: "-0.2s" }} />
+              <span className="h-2 w-2 animate-bounce rounded-full bg-mute" style={{ animationDelay: "-0.1s" }} />
+              <span className="h-2 w-2 animate-bounce rounded-full bg-mute" />
+            </div>
+          </div>
+        )}
         {justSent && !sending && (
           <p className="text-center text-xs text-mute">Delivered — I'll reply personally as soon as I can. 💫</p>
         )}
