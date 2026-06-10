@@ -23,7 +23,7 @@ const STAGES: { value: string; label: string }[] = [
 function StageCell({ email, value }: { email: string | null; value: string }) {
   const [stage, setStage] = useState(value);
   const [saving, setSaving] = useState(false);
-  if (!email) return <span className="text-xs text-neutral-600">—</span>;
+  if (!email) return <span className="text-xs text-neutral-400">—</span>;
   async function save(next: string) {
     setStage(next); setSaving(true);
     await fetch("/api/admin/winback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, stage: next }) }).catch(() => {});
@@ -48,7 +48,7 @@ function date(iso: string | null) {
 }
 
 function Pill({ on, label }: { on: boolean; label: string }) {
-  return <span className={`mr-1 rounded-full px-2 py-0.5 text-[11px] ${on ? "bg-emerald-500/15 text-emerald-400" : "bg-neutral-800 text-neutral-600"}`}>{label}</span>;
+  return <span className={`mr-1 rounded-full px-2 py-0.5 text-[11px] ${on ? "bg-emerald-500/15 text-emerald-400" : "bg-neutral-800 text-neutral-400"}`}>{label}</span>;
 }
 function Engagement({ r }: { r: Row }) {
   if (r.bounced) return <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-[11px] text-red-400">bounced</span>;
@@ -64,7 +64,7 @@ function Engagement({ r }: { r: Row }) {
 export function WinbackTable({ rows }: { rows: Row[] }) {
   // Rows arrive already sorted by most recent cancellation (server-side).
   const [page, setPage] = useState(0);
-  if (rows.length === 0) return <p className="text-sm text-neutral-500">No cancellations yet.</p>;
+  if (rows.length === 0) return <p className="text-sm text-neutral-400">No cancellations yet.</p>;
 
   const pages = Math.ceil(rows.length / PER_PAGE);
   const start = page * PER_PAGE;
@@ -74,10 +74,10 @@ export function WinbackTable({ rows }: { rows: Row[] }) {
   const clicked = rows.filter((r) => r.clickedAt).length;
   return (
     <div className="space-y-3">
-      <p className="text-xs text-neutral-400">Funnel: <span className="text-emerald-400">{opened}</span> opened · <span className="text-emerald-400">{clicked}</span> clicked · of {rows.length} contacted</p>
+      <p className="text-xs text-neutral-300">Funnel: <span className="text-emerald-400">{opened}</span> opened · <span className="text-emerald-400">{clicked}</span> clicked · of {rows.length} contacted</p>
       <div className="overflow-x-auto rounded-xl border border-neutral-800">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-900 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <thead className="bg-neutral-900 text-left text-xs uppercase tracking-wide text-neutral-400">
             <tr>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Name</th>
@@ -96,10 +96,10 @@ export function WinbackTable({ rows }: { rows: Row[] }) {
                 <td className="px-4 py-3">{r.email ?? "—"}</td>
                 <td className="px-4 py-3">{r.name ?? "—"}</td>
                 <td className="px-4 py-3">{r.product}</td>
-                <td className="px-4 py-3 font-medium text-amber-400">{gbp(r.amountGbp)}<span className="text-neutral-500">/{r.interval}</span></td>
+                <td className="px-4 py-3 font-medium text-amber-400">{gbp(r.amountGbp)}<span className="text-neutral-400">/{r.interval}</span></td>
                 <td className="px-4 py-3"><span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs text-red-400">{r.status}</span></td>
                 <td className="px-4 py-3">{date(r.canceledAt)}</td>
-                <td className="px-4 py-3 text-neutral-500">{date(r.created)}</td>
+                <td className="px-4 py-3 text-neutral-400">{date(r.created)}</td>
                 <td className="px-4 py-3"><StageCell email={r.email} value={r.stage ?? "not_started"} /></td>
                 <td className="px-4 py-3"><Engagement r={r} /></td>
               </tr>
@@ -108,7 +108,7 @@ export function WinbackTable({ rows }: { rows: Row[] }) {
         </table>
       </div>
       {pages > 1 && (
-        <div className="flex items-center justify-between text-xs text-neutral-400">
+        <div className="flex items-center justify-between text-xs text-neutral-300">
           <span>Showing {start + 1}–{Math.min(start + PER_PAGE, rows.length)} of {rows.length}</span>
           <div className="flex items-center gap-2">
             <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}

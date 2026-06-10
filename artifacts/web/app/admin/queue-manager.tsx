@@ -69,7 +69,7 @@ export function QueueManager({ items }: { items: QueueItem[] }) {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-neutral-400">
+      <p className="text-sm text-neutral-300">
         Upload photos/videos once into a shared queue. Each fan can unlock items one at a time from their chat, in order —
         and never receives the same item twice. {photos.length} photo{photos.length === 1 ? "" : "s"} · {videos.length} video{videos.length === 1 ? "" : "s"} live.
       </p>
@@ -80,18 +80,18 @@ export function QueueManager({ items }: { items: QueueItem[] }) {
           Choose files
           <input type="file" accept="image/*,video/*" multiple onChange={(e) => onChoose(e.target.files)} className="hidden" />
         </label>
-        {rows.length > 0 && <span className="ml-3 text-xs text-neutral-400">{rows.length} file{rows.length === 1 ? "" : "s"} selected</span>}
-        <p className="mt-2 text-[11px] text-neutral-500">Tip: to add Google Drive files to this queue, use Import from Google Drive below and set “Add to → Content queue”.</p>
+        {rows.length > 0 && <span className="ml-3 text-xs text-neutral-300">{rows.length} file{rows.length === 1 ? "" : "s"} selected</span>}
+        <p className="mt-2 text-[11px] text-neutral-400">Tip: to add Google Drive files to this queue, use Import from Google Drive below and set “Add to → Content queue”.</p>
         {rows.length > 0 && (
           <div className="mt-3 space-y-2">
-            <label className="block text-xs text-neutral-400">
+            <label className="block text-xs text-neutral-300">
               Price per {isVideo ? "video" : "photo"} · £
               <input type="number" min={1} step={1} value={price} onChange={(e) => setPrice(Number(e.target.value))}
                 className="ml-1 w-20 rounded-md border border-neutral-700 bg-neutral-950 px-2 py-1 text-xs text-neutral-100" />
             </label>
             {rows.map((r) => (
               <div key={r.id} className="flex items-center gap-2">
-                <span className="text-xs text-neutral-500 truncate max-w-[40%]">{r.file.name}</span>
+                <span className="text-xs text-neutral-400 truncate max-w-[40%]">{r.file.name}</span>
                 <input value={r.caption} onChange={(e) => setCaption(r.id, e.target.value)} placeholder="caption (optional)"
                   className="flex-1 rounded-md border border-neutral-700 bg-neutral-950 px-2 py-1 text-xs text-neutral-100" />
               </div>
@@ -107,20 +107,20 @@ export function QueueManager({ items }: { items: QueueItem[] }) {
 
       {items.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-neutral-400">In the queue (order fans receive them)</p>
+          <p className="text-xs font-medium text-neutral-300">In the queue (order fans receive them)</p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {items.map((it) => (
               <div key={it.id} className="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900 p-2">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-neutral-800 bg-neutral-950 text-[10px] text-neutral-500">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-neutral-800 bg-neutral-950 text-[10px] text-neutral-400">
                   {it.kind === "photo" && it.signedUrl
                     ? <img src={it.signedUrl} alt="" className="h-full w-full object-cover" />
                     : (it.kind === "video" ? "▶ video" : "photo")}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs text-neutral-200">{it.caption || (it.kind === "video" ? "Video" : "Photo")}</p>
-                  <p className="text-[11px] text-neutral-500">{gbp(it.price_pence)} · unlocked by {it.unlockedCount} fan{it.unlockedCount === 1 ? "" : "s"}</p>
+                  <p className="text-[11px] text-neutral-400">{gbp(it.price_pence)} · unlocked by {it.unlockedCount} fan{it.unlockedCount === 1 ? "" : "s"}</p>
                 </div>
-                <button onClick={() => remove(it.id)} className="shrink-0 rounded-md border border-neutral-700 px-2 py-1 text-[11px] text-neutral-400 hover:border-red-500 hover:text-red-400">Remove</button>
+                <button onClick={() => remove(it.id)} className="shrink-0 rounded-md border border-neutral-700 px-2 py-1 text-[11px] text-neutral-300 hover:border-red-500 hover:text-red-400">Remove</button>
               </div>
             ))}
           </div>

@@ -32,7 +32,7 @@ function date(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 function statusBadge(s: string | null): string {
-  if (!s) return "bg-neutral-800 text-neutral-400";
+  if (!s) return "bg-neutral-800 text-neutral-300";
   if (["active", "trialing"].includes(s)) return "bg-emerald-500/15 text-emerald-400";
   if (["past_due", "unpaid", "incomplete"].includes(s)) return "bg-amber-500/15 text-amber-400";
   return "bg-red-500/15 text-red-400";
@@ -251,7 +251,7 @@ export default async function AdminPage() {
       <header className="border-b border-neutral-800 bg-black">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <h1 className="text-lg font-semibold tracking-wide">Admin · Wanderlust Wonderer</h1>
-          <div className="flex gap-4 text-sm text-neutral-400">
+          <div className="flex gap-4 text-sm text-neutral-300">
             <Link href="/account" className="hover:text-amber-400">Account</Link>
             <a href="/api/auth/signout" className="hover:text-amber-400">Sign out</a>
           </div>
@@ -261,7 +261,7 @@ export default async function AdminPage() {
       <main className="mx-auto max-w-6xl space-y-10 px-6 py-10">
         {/* Earnings */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Earnings</h2>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-400">Earnings</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Stat label="MRR (active subs)" value={gbp(stats.mrrGbp)} accent />
             <Stat label="Stripe available" value={gbp(stats.stripe.availableGbp)} />
@@ -275,7 +275,7 @@ export default async function AdminPage() {
 
         {/* Revenue by stream — 7-day rolling + 30-day total */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Revenue by stream</h2>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-400">Revenue by stream</h2>
           <div className="grid gap-4 sm:grid-cols-3">
             {[
               { title: "Messaging upsells", sub: "photo/video unlocks in chat", s7: stats.revenue.upsells7, s30: stats.revenue.upsells30 },
@@ -284,35 +284,35 @@ export default async function AdminPage() {
             ].map((r) => (
               <div key={r.title} className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
                 <p className="text-sm font-medium text-neutral-200">{r.title}</p>
-                <p className="text-[11px] text-neutral-500">{r.sub}</p>
+                <p className="text-[11px] text-neutral-400">{r.sub}</p>
                 <div className="mt-3 flex items-end justify-between">
                   <div>
                     <p className="text-2xl font-semibold text-amber-400">{gbp(r.s7)}</p>
-                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">7-day rolling</p>
+                    <p className="text-[11px] uppercase tracking-wide text-neutral-400">7-day rolling</p>
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-semibold text-neutral-200">{gbp(r.s30)}</p>
-                    <p className="text-[11px] uppercase tracking-wide text-neutral-500">30-day total</p>
+                    <p className="text-[11px] uppercase tracking-wide text-neutral-400">30-day total</p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <p className="mt-2 text-xs text-neutral-600">From Stripe charges. Memberships = subscription invoices; sessions = booking prices; upsells = in-chat unlocks &amp; one-off content.</p>
+          <p className="mt-2 text-xs text-neutral-400">From Stripe charges. Memberships = subscription invoices; sessions = booking prices; upsells = in-chat unlocks &amp; one-off content.</p>
         </section>
 
         {/* Top spenders — last 30 days */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Top spenders · last 30 days</h2>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-400">Top spenders · last 30 days</h2>
           {stats.topSpenders.length === 0 ? (
-            <p className="text-sm text-neutral-500">No charges in the last 30 days yet.</p>
+            <p className="text-sm text-neutral-400">No charges in the last 30 days yet.</p>
           ) : (
             <ul className="divide-y divide-neutral-800 rounded-xl border border-neutral-800">
               {stats.topSpenders.map((t, i) => (
                 <li key={t.email ?? i} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
-                  <span><span className="mr-2 text-neutral-500">#{i + 1}</span>{t.label}{t.email ? <span className="text-neutral-500"> · {t.email}</span> : null}</span>
+                  <span><span className="mr-2 text-neutral-400">#{i + 1}</span>{t.label}{t.email ? <span className="text-neutral-400"> · {t.email}</span> : null}</span>
                   <span className="flex items-center gap-3">
-                    <span className="text-xs text-neutral-500">{[t.memberships > 0 ? `Memberships ${gbp(t.memberships)}` : null, t.sessions > 0 ? `Sessions ${gbp(t.sessions)}` : null, t.upsells > 0 ? `Upsells ${gbp(t.upsells)}` : null].filter(Boolean).join(" · ")}</span>
+                    <span className="text-xs text-neutral-400">{[t.memberships > 0 ? `Memberships ${gbp(t.memberships)}` : null, t.sessions > 0 ? `Sessions ${gbp(t.sessions)}` : null, t.upsells > 0 ? `Upsells ${gbp(t.upsells)}` : null].filter(Boolean).join(" · ")}</span>
                     <span className="font-semibold text-amber-400">{gbp(t.totalGbp)}</span>
                   </span>
                 </li>
@@ -323,20 +323,20 @@ export default async function AdminPage() {
 
         {/* Traffic & funnel — first-party analytics, last 7 days */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Traffic &amp; funnel · last 7 days</h2>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-400">Traffic &amp; funnel · last 7 days</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {funnel.map((f) => (
               <Stat key={f.label} label={f.label} value={String(f.value)} />
             ))}
           </div>
-          <p className="mt-2 text-xs text-neutral-600">First-party, cookieless session counting. Numbers build up as visitors arrive.</p>
+          <p className="mt-2 text-xs text-neutral-400">First-party, cookieless session counting. Numbers build up as visitors arrive.</p>
         </section>
 
         {/* Acquisition sources — where this week's visitors came from */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Acquisition sources · last 7 days</h2>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-400">Acquisition sources · last 7 days</h2>
           {topSources.length === 0 ? (
-            <p className="text-sm text-neutral-500">No tagged sources yet. Add <span className="font-mono text-neutral-300">?utm_source=instagram</span> (etc.) to your ad/post links to see which campaigns drive signups.</p>
+            <p className="text-sm text-neutral-400">No tagged sources yet. Add <span className="font-mono text-neutral-300">?utm_source=instagram</span> (etc.) to your ad/post links to see which campaigns drive signups.</p>
           ) : (
             <ul className="divide-y divide-neutral-800 rounded-xl border border-neutral-800">
               {topSources.map(([src, n]) => (
@@ -345,7 +345,7 @@ export default async function AdminPage() {
                   <span className="text-amber-400">{n} session{n === 1 ? "" : "s"}</span>
                 </li>
               ))}
-              <li className="flex items-center justify-between px-4 py-2 text-sm text-neutral-500">
+              <li className="flex items-center justify-between px-4 py-2 text-sm text-neutral-400">
                 <span>Direct / untagged</span><span>{directSessions} session{directSessions === 1 ? "" : "s"}</span>
               </li>
             </ul>
@@ -354,16 +354,16 @@ export default async function AdminPage() {
 
         {/* Going quiet — re-engage before they churn */}
         <section>
-          <h2 className="mb-1 text-sm font-semibold uppercase tracking-widest text-neutral-500">Going quiet · re-engage</h2>
-          <p className="mb-4 text-xs text-neutral-600">Members who haven&apos;t messaged in 7+ days. Paying members shown first — a warm message often saves them before they cancel.</p>
+          <h2 className="mb-1 text-sm font-semibold uppercase tracking-widest text-neutral-400">Going quiet · re-engage</h2>
+          <p className="mb-4 text-xs text-neutral-400">Members who haven&apos;t messaged in 7+ days. Paying members shown first — a warm message often saves them before they cancel.</p>
           {quietMembers.length === 0 ? (
-            <p className="text-sm text-neutral-500">No one&apos;s gone quiet — everyone&apos;s engaged ✨</p>
+            <p className="text-sm text-neutral-400">No one&apos;s gone quiet — everyone&apos;s engaged ✨</p>
           ) : (
             <ul className="divide-y divide-neutral-800 rounded-xl border border-neutral-800">
               {quietMembers.map((q) => (
                 <li key={q.email} className="flex items-center justify-between px-4 py-2 text-sm">
                   <span>{q.email}{q.member && <span className="ml-2 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] text-amber-400">paying</span>}</span>
-                  <span className="text-neutral-500">quiet {q.days}d</span>
+                  <span className="text-neutral-400">quiet {q.days}d</span>
                 </li>
               ))}
             </ul>
@@ -372,7 +372,7 @@ export default async function AdminPage() {
 
         {/* Active subscriptions — live from Stripe (source of truth for billing) */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-400">
             Active subscriptions ({stats.stripeSubs.active.length})
           </h2>
           <StripeTable rows={stats.stripeSubs.active} mode="active" chatEmails={chatEmails} />
@@ -383,7 +383,7 @@ export default async function AdminPage() {
 
         {/* Cancelled subscribers — winback list */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-400">
             Cancelled subscribers · winback ({stats.stripeSubs.canceled.length})
           </h2>
           <WinbackSender />
@@ -393,7 +393,7 @@ export default async function AdminPage() {
 
         {/* All accounts */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-400">
             All accounts ({stats.totalAccounts})
           </h2>
           <Table rows={stats.accounts} />
@@ -401,7 +401,7 @@ export default async function AdminPage() {
 
         {/* Bookings & availability */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-400">
             Bookings &amp; availability
           </h2>
           <SlotManager products={bookingProducts ?? []} openSlots={openSlots} bookings={upcomingBookings} />
@@ -409,31 +409,31 @@ export default async function AdminPage() {
 
         {/* Content — upload & manage membership content */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Content</h2>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-400">Content</h2>
           <ContentManager items={contentItems} />
         </section>
 
         {/* Content queue — shared library dripped to fans one at a time */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Content queue</h2>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-400">Content queue</h2>
           <QueueManager items={queueItems} />
         </section>
 
         {/* Import content straight from Google Drive */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Import from Google Drive</h2>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-400">Import from Google Drive</h2>
           <GdriveImporter />
         </section>
 
         {/* Vault weeks — title each archived week (sold at £150/week in The Vault) */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">Vault weeks</h2>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-400">Vault weeks</h2>
           <VaultWeekTitler weeks={adminVaultWeeks} />
         </section>
 
         {/* Messages — review drafts, reply, send paid content */}
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-500">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-neutral-400">
             Messages
           </h2>
           <AdminInbox newMessages={newMessages} allThreads={allThreads} />
@@ -447,7 +447,7 @@ export default async function AdminPage() {
 function Stat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className={`rounded-xl border p-5 ${accent ? "border-amber-500/40 bg-amber-500/5" : "border-neutral-800 bg-neutral-900"}`}>
-      <p className="text-xs text-neutral-500">{label}</p>
+      <p className="text-xs text-neutral-400">{label}</p>
       <p className={`mt-1 text-2xl font-semibold ${accent ? "text-amber-400" : ""}`}>{value}</p>
     </div>
   );
@@ -457,12 +457,12 @@ function threadSlug(email: string | null): string { return (email || "").toLower
 
 function StripeTable({ rows, mode, chatEmails = [] }: { rows: StripeSubRow[]; mode: "active" | "canceled"; chatEmails?: string[] }) {
   if (rows.length === 0) {
-    return <p className="text-sm text-neutral-500">{mode === "active" ? "No active Stripe subscriptions." : "No cancellations yet."}</p>;
+    return <p className="text-sm text-neutral-400">{mode === "active" ? "No active Stripe subscriptions." : "No cancellations yet."}</p>;
   }
   return (
     <div className="overflow-x-auto rounded-xl border border-neutral-800">
       <table className="w-full text-sm">
-        <thead className="bg-neutral-900 text-left text-xs uppercase tracking-wide text-neutral-500">
+        <thead className="bg-neutral-900 text-left text-xs uppercase tracking-wide text-neutral-400">
           <tr>
             <th className="px-4 py-3">Email</th>
             <th className="px-4 py-3">Name</th>
@@ -480,18 +480,18 @@ function StripeTable({ rows, mode, chatEmails = [] }: { rows: StripeSubRow[]; mo
               <td className="px-4 py-3">{r.email ?? "—"}</td>
               <td className="px-4 py-3">{r.name ?? "—"}</td>
               <td className="px-4 py-3">{r.product}</td>
-              <td className="px-4 py-3 font-medium text-amber-400">{gbp(r.amountGbp)}<span className="text-neutral-500">/{r.interval}</span></td>
+              <td className="px-4 py-3 font-medium text-amber-400">{gbp(r.amountGbp)}<span className="text-neutral-400">/{r.interval}</span></td>
               <td className="px-4 py-3">
                 <span className={`rounded-full px-2 py-0.5 text-xs ${statusBadge(r.status)}`}>{r.status}</span>
               </td>
               <td className="px-4 py-3">{mode === "active" ? date(r.currentPeriodEnd) : date(r.canceledAt)}</td>
-              <td className="px-4 py-3 text-neutral-500">{date(r.created)}</td>
+              <td className="px-4 py-3 text-neutral-400">{date(r.created)}</td>
               {mode === "active" && (
                 <td className="px-4 py-3">
                   {chatEmails.includes((r.email || "").toLowerCase()) ? (
                     <a href={`#thread-${threadSlug(r.email)}`} className="rounded-md border border-amber-500/50 px-3 py-1 text-xs font-medium text-amber-400 hover:bg-amber-500/10">Send message</a>
                   ) : (
-                    <span className="text-xs text-neutral-600">No chat yet</span>
+                    <span className="text-xs text-neutral-400">No chat yet</span>
                   )}
                 </td>
               )}
@@ -504,11 +504,11 @@ function StripeTable({ rows, mode, chatEmails = [] }: { rows: StripeSubRow[]; mo
 }
 
 function Table({ rows }: { rows: AccountRow[] }) {
-  if (rows.length === 0) return <p className="text-sm text-neutral-500">None.</p>;
+  if (rows.length === 0) return <p className="text-sm text-neutral-400">None.</p>;
   return (
     <div className="overflow-x-auto rounded-xl border border-neutral-800">
       <table className="w-full text-sm">
-        <thead className="bg-neutral-900 text-left text-xs uppercase tracking-wide text-neutral-500">
+        <thead className="bg-neutral-900 text-left text-xs uppercase tracking-wide text-neutral-400">
           <tr>
             <th className="px-4 py-3">Email</th>
             <th className="px-4 py-3">Tier</th>
@@ -534,7 +534,7 @@ function Table({ rows }: { rows: AccountRow[] }) {
               <td className="px-4 py-3">{r.messages_sent}</td>
               <td className="px-4 py-3">{r.topup_count}</td>
               <td className="px-4 py-3">{date(r.subscription_end_date)}</td>
-              <td className="px-4 py-3 text-neutral-500">{date(r.created_at)}</td>
+              <td className="px-4 py-3 text-neutral-400">{date(r.created_at)}</td>
             </tr>
           ))}
         </tbody>

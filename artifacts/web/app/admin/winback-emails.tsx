@@ -24,7 +24,7 @@ export function WinbackEmails({ emails }: { emails: string[] }) {
       </button>
       <a
         href={`mailto:?bcc=${encodeURIComponent(emails.join(","))}`}
-        className="text-xs text-neutral-400 underline hover:text-amber-400"
+        className="text-xs text-neutral-300 underline hover:text-amber-400"
       >
         Open in mail app (BCC)
       </a>

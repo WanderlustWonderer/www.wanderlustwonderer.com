@@ -89,18 +89,18 @@ export function ContentManager({ items }: { items: Item[] }) {
               Choose files
               <input type="file" multiple accept="image/*,video/*" onChange={(e) => onChoose(e.target.files)} className="hidden" />
             </label>
-            {rows.length > 0 && <span className="ml-3 text-xs text-neutral-400">{rows.length} file{rows.length === 1 ? "" : "s"} selected</span>}
+            {rows.length > 0 && <span className="ml-3 text-xs text-neutral-300">{rows.length} file{rows.length === 1 ? "" : "s"} selected</span>}
           </div>
         </div>
 
         {rows.length > 0 && (
           <div className="mt-4 space-y-3">
-            <p className="text-xs uppercase tracking-wide text-neutral-500">
+            <p className="text-xs uppercase tracking-wide text-neutral-400">
               {isVideo ? "Video" : `${rows.length} photo${rows.length > 1 ? "s" : ""}`} · edit titles, then publish
             </p>
             {rows.map((row, i) => (
               <div key={row.id} className="rounded-lg border border-neutral-800 bg-neutral-950 p-3">
-                <p className="mb-2 truncate text-xs text-neutral-500">{i + 1}. {row.file.name}</p>
+                <p className="mb-2 truncate text-xs text-neutral-400">{i + 1}. {row.file.name}</p>
                 <input
                   value={row.title}
                   onChange={(e) => setTitle(row.id, e.target.value)}
@@ -122,23 +122,23 @@ export function ContentManager({ items }: { items: Item[] }) {
           {busy ? (msg ?? "Publishing…") : "Publish content"}
         </button>
         {msg && !busy && <p className="mt-2 text-xs text-amber-400">{msg}</p>}
-        <p className="mt-2 text-xs text-neutral-500">Up to 5 photos (or one video) per upload — each is published with its own title (auto-filled from the file name, fully editable). iPhone HEIC photos convert automatically. Visible to the selected tier and above for 4 weeks, then moves to the Vault automatically.</p>
+        <p className="mt-2 text-xs text-neutral-400">Up to 5 photos (or one video) per upload — each is published with its own title (auto-filled from the file name, fully editable). iPhone HEIC photos convert automatically. Visible to the selected tier and above for 4 weeks, then moves to the Vault automatically.</p>
       </div>
 
       <div>
         <p className="mb-2 text-sm font-medium">Published content ({items.length})</p>
-        {items.length === 0 ? <p className="text-sm text-neutral-500">Nothing published yet.</p> : (
+        {items.length === 0 ? <p className="text-sm text-neutral-400">Nothing published yet.</p> : (
           <ul className="divide-y divide-neutral-800 rounded-xl border border-neutral-800">
             {items.slice(page * PER, page * PER + PER).map((it) => (
               <li key={it.id} className="flex items-center justify-between px-4 py-2 text-sm">
-                <span>{it.title} · <span className="text-neutral-400">{tierName[it.min_tier] ?? it.min_tier}</span> · {it.live ? <span className="text-emerald-400">live</span> : <span className="text-neutral-500">vault</span>} · {it.published_at ? new Date(it.published_at).toLocaleDateString("en-GB") : "—"}</span>
+                <span>{it.title} · <span className="text-neutral-300">{tierName[it.min_tier] ?? it.min_tier}</span> · {it.live ? <span className="text-emerald-400">live</span> : <span className="text-neutral-400">vault</span>} · {it.published_at ? new Date(it.published_at).toLocaleDateString("en-GB") : "—"}</span>
                 <button onClick={() => del(it.id)} className="text-xs text-red-400 hover:text-red-300">Delete</button>
               </li>
             ))}
           </ul>
         )}
         {items.length > PER && (
-          <div className="mt-3 flex items-center justify-between text-xs text-neutral-400">
+          <div className="mt-3 flex items-center justify-between text-xs text-neutral-300">
             <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0} className="rounded-md border border-neutral-700 px-3 py-1 disabled:opacity-30">Prev</button>
             <span>Page {page + 1} of {Math.ceil(items.length / PER)}</span>
             <button onClick={() => setPage((p) => Math.min(Math.ceil(items.length / PER) - 1, p + 1))} disabled={page >= Math.ceil(items.length / PER) - 1} className="rounded-md border border-neutral-700 px-3 py-1 disabled:opacity-30">Next</button>
