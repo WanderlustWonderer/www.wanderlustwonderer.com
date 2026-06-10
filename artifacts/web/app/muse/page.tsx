@@ -2,15 +2,62 @@ import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 
+const OG_IMAGE =
+  "https://i0.wp.com/wanderlustwonderer.com/wp-content/uploads/2026/04/IMG_2231-829x1024.jpg?ssl=1";
+const MUSE_TITLE = "Tasmyn Leigh — FHM New Zealand | Wanderlust Wonderer";
+const MUSE_DESC =
+  "Tasmyn Leigh, the Wanderlust Wonderer — FHM New Zealand cover model, traveller (39 countries and counting), certified yoga instructor and digital creator. Step inside her world.";
+
 export const metadata = {
-  title: "Meet Tasmyn Leigh — The Wanderlust Wonderer",
-  description:
-    "Born in South Africa, 39 countries and counting, and the cover of FHM. The story of Tasmyn Leigh — traveller, yoga instructor, model and Muse.",
+  title: { absolute: MUSE_TITLE },
+  description: MUSE_DESC,
+  keywords: ["Tasmyn Leigh", "Tasmyn Leigh FHM", "FHM New Zealand", "FHM cover", "Wanderlust Wonderer", "model", "yoga instructor", "digital creator"],
+  alternates: { canonical: "/muse" },
+  openGraph: {
+    type: "profile",
+    title: MUSE_TITLE,
+    description: MUSE_DESC,
+    url: "/muse",
+    siteName: "Wanderlust Wonderer",
+    images: [{ url: OG_IMAGE, width: 829, height: 1024, alt: "Tasmyn Leigh — Wanderlust Wonderer" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: MUSE_TITLE,
+    description: MUSE_DESC,
+    images: [OG_IMAGE],
+  },
+};
+
+const JSONLD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      name: "Tasmyn Leigh",
+      alternateName: "Wanderlust Wonderer",
+      jobTitle: "Model, Yoga Instructor & Digital Creator",
+      description: "FHM New Zealand cover model, traveller, certified yoga instructor and digital creator.",
+      url: "https://wanderlustwonderer.com/muse",
+      image: OG_IMAGE,
+      sameAs: [
+        "https://www.instagram.com/wanderlust_wonderer/",
+        "https://www.tiktok.com/@dailyyogadiary",
+      ],
+    },
+    {
+      "@type": "WebSite",
+      name: "Wanderlust Wonderer",
+      url: "https://wanderlustwonderer.com",
+      about: "Tasmyn Leigh — the Wanderlust Wonderer",
+    },
+  ],
 };
 
 export default function MusePage() {
   return (
     <div className="text-neutral-100 min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSONLD) }} />
       <SiteNav />
 
       <main className="mx-auto max-w-3xl px-6 py-16 sm:py-24">

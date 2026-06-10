@@ -13,6 +13,7 @@ import { ContentManager } from "./content-manager";
 import { QueueManager, type QueueItem } from "./queue-manager";
 import { VaultWeekTitler, type AdminWeek } from "./vault-week-titler";
 import { GdriveImporter } from "./gdrive-importer";
+import { UpsellOpportunities } from "./upsell-opportunities";
 import { listArchiveWeeks } from "@/lib/content/store";
 import { isLive } from "@/lib/content/vault";
 
@@ -390,6 +391,8 @@ export default async function AdminPage() {
           <WinbackEmails emails={Array.from(new Set(stats.stripeSubs.canceled.map((r) => r.email).filter((e): e is string => !!e)))} />
           <WinbackTable rows={stats.stripeSubs.canceled} />
         </section>
+
+        <UpsellOpportunities accounts={stats.accounts} />
 
         {/* All accounts */}
         <section>
