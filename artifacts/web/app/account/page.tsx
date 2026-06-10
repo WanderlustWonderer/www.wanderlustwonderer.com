@@ -11,6 +11,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { computeAchievements, tenureLabel } from "@/lib/achievements";
 import { ProfileEditor } from "@/components/profile-editor";
 import { ReferralCard } from "@/components/referral-card";
+import { TwoFactorSetup } from "@/components/two-factor-setup";
 import { ensureReferralCode, applyReferral, referralStats, REFERRAL_BONUS } from "@/lib/referral";
 import { cookies } from "next/headers";
 
@@ -45,7 +46,8 @@ function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
-export default async function AccountPage() {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ setup2fa?: string }> }) {
+  const sp = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -149,7 +151,15 @@ export default async function AccountPage() {
           </div>
         </section>
 
+        {sp?.setup2fa && (
+          <div className="mt-6 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5 text-sm text-amber-200">
+            Set up two-step verification below to access the admin area — it&rsquo;s required for admin sign-in.
+          </div>
+        )}
+
         <ReferralCard code={referralCode} count={refStats.count} earned={refStats.earned} bonus={REFERRAL_BONUS} />
+
+        <TwoFactorSetup />
 
         {/* Membership · content · achievements (merged) */}
         <section className="mt-10 rounded-2xl border border-neutral-700 p-8">

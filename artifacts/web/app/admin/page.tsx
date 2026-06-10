@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
@@ -44,6 +44,13 @@ export default async function AdminPage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!isAdmin(user?.email)) notFound(); // 404 for everyone who isn't an admin
+
+  // Mandatory two-step verification for the admin area.
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal?.currentLevel !== "aal2") {
+    if (aal?.nextLevel === "aal2") redirect("/mfa?next=/admin"); // has a factor — verify it
+    redirect("/account?setup2fa=1"); // no factor — must enrol first
+  }
 
   const admin = createAdminClient();
   const stats = await loadAdminStats(admin);

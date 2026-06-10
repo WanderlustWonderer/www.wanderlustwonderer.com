@@ -17,7 +17,12 @@ export async function login(formData: FormData) {
     return { error: error.message };
   }
 
+  // If this account has a verified second factor, require it before continuing.
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   revalidatePath("/", "layout");
+  if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+    redirect("/mfa");
+  }
   redirect("/account");
 }
 
