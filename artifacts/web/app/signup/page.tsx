@@ -14,6 +14,8 @@ export default function SignupPage() {
     setError(null);
     setLoading(true);
     const formData = new FormData(e.currentTarget);
+    const __next = new URLSearchParams(window.location.search).get("next");
+    if (__next) formData.set("next", __next);
     const result = await signup(formData);
     if (result?.error) {
       setError(result.error);

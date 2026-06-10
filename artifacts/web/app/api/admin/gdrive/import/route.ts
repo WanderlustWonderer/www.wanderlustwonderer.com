@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { isAdmin } from "@/lib/admin/guard";
+import { isAdmin, isAal2 } from "@/lib/admin/guard";
 import { ensureWebImage } from "@/lib/server/heic";
-import { downloadDriveFile, gdriveConfigured } from "@/lib/server/gdrive";
+import { downloadDriveFile, gdriveConfigured, listDriveFiles } from "@/lib/server/gdrive";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -18,12 +18,19 @@ export async function POST(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!isAdmin(user?.email)) return NextResponse.json({ error: "forbidden" }, { status: 404 });
+  if (!(await isAal2(supabase))) return NextResponse.json({ error: "forbidden" }, { status: 404 });
   if (!gdriveConfigured()) return NextResponse.json({ error: "not_configured" }, { status: 400 });
 
   let body: { fileIds?: string[]; target?: string; minTier?: string; photoPence?: number; videoPence?: number };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "invalid_body" }, { status: 400 }); }
-  const fileIds = (body.fileIds ?? []).filter((s) => typeof s === "string").slice(0, 25);
-  if (fileIds.length === 0) return NextResponse.json({ error: "no_files" }, { status: 400 });
+  const requested = (body.fileIds ?? []).filter((s) => typeof s === "string").slice(0, 25);
+  if (requested.length === 0) return NextResponse.json({ error: "no_files" }, { status: 400 });
+
+  // Scope: only files actually under the configured GDRIVE_FOLDER_ID may be
+  // imported — never an arbitrary Drive file the service account can read.
+  const allowed = new Set((await listDriveFiles()).map((f) => f.id));
+  const fileIds = requested.filter((id) => allowed.has(id));
+  if (fileIds.length === 0) return NextResponse.json({ error: "no_files_in_folder" }, { status: 400 });
 
   const target = body.target === "queue" ? "queue" : "content";
   const minTier = ["the_gallery", "private_world", "all_access"].includes(body.minTier ?? "") ? body.minTier! : "the_gallery";

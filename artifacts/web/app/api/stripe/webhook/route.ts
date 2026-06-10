@@ -56,6 +56,8 @@ export async function POST(req: Request) {
           await handleContentUnlock(session);
         } else if (session.metadata?.booking_purchase === "1") {
           await handleBookingPurchase(session);
+        } else if (session.metadata?.tip === "1") {
+          await handleTip(session);
         } else if (session.metadata?.companion === "1") {
           const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 });
           const credits = creditsFromPriceId(lineItems.data[0]?.price?.id);
@@ -343,6 +345,22 @@ async function handleVaultPurchase(session: Stripe.Checkout.Session) {
     stripe_payment_intent_id: stringId(session.payment_intent),
   });
   if (error && error.code !== "23505") throw error;
+}
+
+async function handleTip(session: Stripe.Checkout.Session) {
+  const admin = membershipAdmin();
+  const userId = session.metadata?.user_id ?? session.client_reference_id;
+  const paymentIntent = stringId(session.payment_intent);
+  if (!userId || !paymentIntent) return;
+  // Idempotent on payment_intent (unique index) so webhook retries don't double-record.
+  await admin.from("tips").upsert(
+    {
+      profile_id: userId,
+      amount_pence: session.amount_total ?? 0,
+      stripe_payment_intent: paymentIntent,
+    },
+    { onConflict: "stripe_payment_intent", ignoreDuplicates: true },
+  );
 }
 
 function stringId(value: string | { id: string } | null | undefined): string | null {

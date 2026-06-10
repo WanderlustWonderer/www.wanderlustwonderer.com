@@ -66,7 +66,7 @@ export async function findConfirmedPayment(reference: string, minSol: number): P
   const sigs = await rpc<Array<{ signature: string; err: unknown }>>(
     "getSignaturesForAddress", [reference, { limit: 10 }]
   );
-  const minLamports = Math.floor(minSol * LAMPORTS_PER_SOL * 0.99); // 1% tolerance for drift/fees
+  const minLamports = Math.floor(minSol * LAMPORTS_PER_SOL * 0.997); // tiny rounding tolerance only
   for (const s of sigs) {
     if (s.err) continue;
     const tx = await rpc<{
@@ -75,6 +75,10 @@ export async function findConfirmedPayment(reference: string, minSol: number): P
     }>("getTransaction", [s.signature, { maxSupportedTransactionVersion: 0, encoding: "jsonParsed", commitment: "confirmed" }]);
     if (!tx?.meta || tx.meta.err) continue;
     const keys = (tx.transaction?.message?.accountKeys ?? []).map((k) => (typeof k === "string" ? k : k.pubkey));
+    // The Solana-Pay `reference` MUST appear as an account in the tx — this is
+    // what ties an on-chain payment to THIS specific quote. Without it, a poll
+    // could match an unrelated transfer to the recipient wallet.
+    if (!keys.includes(reference)) continue;
     const idx = keys.indexOf(SOL_RECIPIENT);
     if (idx < 0) continue;
     const delta = (tx.meta.postBalances[idx] ?? 0) - (tx.meta.preBalances[idx] ?? 0);

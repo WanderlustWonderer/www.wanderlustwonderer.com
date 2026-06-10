@@ -74,6 +74,17 @@ export default function MusePage() {
           </p>
         </header>
 
+        {/* Above-the-fold CTA — cold FHM readers convert on connection, lead with the free chat */}
+        <div className="mt-9 flex flex-col items-center gap-3">
+          <a
+            href="/signup?next=/chat"
+            className="rounded-full bg-amber-500 px-8 py-3.5 text-sm font-semibold tracking-wide text-black shadow-lg shadow-amber-500/20 transition hover:bg-amber-400"
+          >
+            Start chatting with me — free
+          </a>
+          <p className="text-xs tracking-wide text-neutral-400">3 free messages · no card needed · 18+</p>
+        </div>
+
         {/* Featured FHM film (silent) */}
         <figure className="mt-14 flex flex-col items-center">
           <div className="w-full max-w-[340px] overflow-hidden rounded-[1.75rem] border border-neutral-800 shadow-2xl shadow-black/60 ring-1 ring-amber-500/10">

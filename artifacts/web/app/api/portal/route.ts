@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { getStripe } from "@/lib/companion/stripe";
-import { getAppUrl } from "@/lib/app-url";
+import { getAppUrl, appRedirectUrl } from "@/lib/app-url";
 
 export const runtime = "nodejs";
 

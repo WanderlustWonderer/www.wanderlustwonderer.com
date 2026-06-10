@@ -11,7 +11,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const cinzel = Cinzel({ variable: "--font-wordmark", subsets: ["latin"], weight: ["600", "700"] });
 const cormorant = Cormorant_Garamond({ variable: "--font-display", subsets: ["latin"], weight: ["400", "500", "600"], style: ["normal", "italic"] });
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://next-tailwind-wanderlustwndr.replit.app";
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://wanderlustwonderer.com";
 const TITLE = "Wanderlust Wonderer — Mystery · Magic · Movement";
 const DESCRIPTION =
   "Step through the portal into a private world of exclusive content, a companion that's always awake, live sessions and more. 18+ members club.";

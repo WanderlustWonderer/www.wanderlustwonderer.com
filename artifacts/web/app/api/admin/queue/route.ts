@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { isAdmin } from "@/lib/admin/guard";
+import { isAdmin, isAal2 } from "@/lib/admin/guard";
 import { ensureWebImage } from "@/lib/server/heic";
 
 export const runtime = "nodejs";
@@ -16,6 +16,7 @@ export async function POST(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!isAdmin(user?.email)) return NextResponse.json({ error: "forbidden" }, { status: 404 });
+  if (!(await isAal2(supabase))) return NextResponse.json({ error: "forbidden" }, { status: 404 });
 
   const form = await req.formData();
   const file = form.get("file") as File | null;
@@ -25,6 +26,13 @@ export async function POST(req: Request) {
   if (!file || !["photo", "video"].includes(kind) || pricePence <= 0) {
     return NextResponse.json({ error: "missing_fields" }, { status: 400 });
   }
+  // Reject script-capable SVG and cap upload size (DoS / stored-XSS hygiene).
+  const MAX_UPLOAD = 300 * 1024 * 1024; // 300MB
+  if (file.size > MAX_UPLOAD) return NextResponse.json({ error: "file_too_large" }, { status: 413 });
+  if ((file.type || "").toLowerCase().includes("svg") || file.name.toLowerCase().endsWith(".svg")) {
+    return NextResponse.json({ error: "unsupported_type" }, { status: 415 });
+  }
+
 
   const admin = createAdminClient();
 

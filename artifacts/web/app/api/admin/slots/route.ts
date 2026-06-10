@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { isAdmin } from "@/lib/admin/guard";
+import { isAdmin, isAal2 } from "@/lib/admin/guard";
 import { CREATOR } from "@/config/creator";
 
 export const runtime = "nodejs";
@@ -16,6 +16,7 @@ export async function POST(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!isAdmin(user?.email)) return NextResponse.json({ error: "forbidden" }, { status: 404 });
+  if (!(await isAal2(supabase))) return NextResponse.json({ error: "forbidden" }, { status: 404 });
 
   let body: SlotInput & { slots?: SlotInput[] };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "invalid_body" }, { status: 400 }); }

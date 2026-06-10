@@ -28,6 +28,22 @@ export async function POST(req: Request) {
   if (message.length > MAX_MESSAGE_CHARS) return NextResponse.json({ error: "too_long", max: MAX_MESSAGE_CHARS }, { status: 400 });
 
   const admin = createAdminClient();
+
+  // Rate limit: cap bursts per user (DB-backed so it works across autoscale
+  // instances). Stops a single account from driving unbounded AI cost.
+  {
+    const since = new Date(Date.now() - 10_000).toISOString();
+    const { count } = await admin
+      .from("chat_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("profile_id", user.id)
+      .eq("role", "fan")
+      .gte("created_at", since);
+    if ((count ?? 0) >= 5) {
+      return NextResponse.json({ error: "rate_limited", retryAfter: 10 }, { status: 429 });
+    }
+  }
+
   const profile = await ensureCompanionProfile(
     admin, user.id,
     (user.user_metadata?.display_name as string) ?? user.email?.split("@")[0],
@@ -82,8 +98,12 @@ export async function POST(req: Request) {
     const viewer: ViewerInfo = { tier: isMember ? ((prof?.membership_tier as ViewerInfo["tier"]) ?? null) : null };
     // Fold the fan's own profile (name + bio) into the Muse's memory so she personalises.
     const selfBits: string[] = [];
-    if (prof?.display_name) selfBits.push(`He goes by "${prof.display_name}".`);
-    if (prof?.bio) selfBits.push(`In his own words: "${String(prof.bio).slice(0, 400)}".`);
+    // Sanitise fan-controlled text before it enters the prompt (strip angle
+    // brackets so it can't break out of the <fan_notes> delimiter, collapse
+    // whitespace). Defence-in-depth against prompt injection.
+    const clean = (v: string) => v.replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
+    if (prof?.display_name) selfBits.push(`He goes by "${clean(String(prof.display_name)).slice(0, 80)}".`);
+    if (prof?.bio) selfBits.push(`In his own words: "${clean(String(prof.bio)).slice(0, 400)}".`);
     const memory = [selfBits.join(" "), profile.memory_summary].filter(Boolean).join("\n");
     const draft = await generateReply(buildDraftPrompt(memory, viewer), history, message);
     await admin.from("chat_messages").insert({

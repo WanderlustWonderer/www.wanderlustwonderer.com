@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { isAdmin } from "@/lib/admin/guard";
+import { isAdmin, isAal2 } from "@/lib/admin/guard";
 import { CREATOR } from "@/config/creator";
 
 export const runtime = "nodejs";
@@ -16,13 +16,22 @@ function fmtWhen(iso: string | null): string {
   } catch { return iso; }
 }
 
+function escapeHtml(v: string): string {
+  return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function safeHttpsUrl(u: string | null): string | null {
+  if (!u) return null;
+  try { const p = new URL(u); return p.protocol === "https:" ? p.href : null; } catch { return null; }
+}
+
 async function sendConfirmation(to: string, sessionName: string, whenIso: string | null, meetingUrl: string | null): Promise<string> {
   if (!process.env.RESEND_API_KEY) return "no_api_key";
   const from = process.env.BOOKING_FROM ?? process.env.LIFECYCLE_FROM ?? process.env.WINBACK_FROM;
   if (!from) return "no_from";
   const when = fmtWhen(whenIso);
-  const link = meetingUrl
-    ? `<p>Your private link to join: <a href="${meetingUrl}">${meetingUrl}</a></p>`
+  const safeLink = safeHttpsUrl(meetingUrl);
+  const link = safeLink
+    ? `<p>Your private link to join: <a href="${escapeHtml(safeLink)}">${escapeHtml(safeLink)}</a></p>`
     : `<p>Your private link to join will follow before we begin.</p>`;
   const html = `
     <div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:520px;margin:auto;color:#111">
@@ -49,6 +58,7 @@ export async function POST(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!isAdmin(user?.email)) return NextResponse.json({ error: "forbidden" }, { status: 404 });
+  if (!(await isAal2(supabase))) return NextResponse.json({ error: "forbidden" }, { status: 404 });
   let body: { bookingId?: string; action?: string; meetingUrl?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "invalid_body" }, { status: 400 }); }
   if (!body.bookingId) return NextResponse.json({ error: "missing_booking" }, { status: 400 });

@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { pickSpendPot, planRenewalEntries, type Pot, type PotBalances } from "./grants";
+import { planRenewalEntries, type Pot, type PotBalances } from "./grants";
 
 export async function balances(admin: SupabaseClient, profileId: string): Promise<PotBalances & { total: number }> {
   const { data } = await admin.from("credit_ledger").select("delta, pot").eq("profile_id", profileId);
@@ -12,15 +12,17 @@ export async function balances(admin: SupabaseClient, profileId: string): Promis
   return { ...b, total: b.subscription + b.purchased };
 }
 
-/** Deduct one credit (subscription pot first). Returns the pot used, or null if broke. */
+/**
+ * Deduct one credit atomically (subscription pot first).
+ * Delegates to the `spend_credit` Postgres function, which takes a per-profile
+ * advisory lock and recomputes the balance inside the transaction — so two
+ * concurrent sends can't both spend the same credit (no double-spend / no
+ * negative balance). Returns the pot used, or null if broke.
+ */
 export async function spendCredit(admin: SupabaseClient, profileId: string): Promise<Pot | null> {
-  const pot = pickSpendPot(await balances(admin, profileId));
-  if (!pot) return null;
-  const { error } = await admin
-    .from("credit_ledger")
-    .insert({ profile_id: profileId, delta: -1, reason: "message", pot });
+  const { data, error } = await admin.rpc("spend_credit", { p_profile_id: profileId });
   if (error) throw error;
-  return pot;
+  return (data as Pot | null) ?? null;
 }
 
 export async function refundCredit(admin: SupabaseClient, profileId: string, pot: Pot): Promise<void> {

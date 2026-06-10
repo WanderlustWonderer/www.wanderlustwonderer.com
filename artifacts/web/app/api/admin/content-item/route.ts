@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { isAdmin } from "@/lib/admin/guard";
+import { isAdmin, isAal2 } from "@/lib/admin/guard";
 import { ensureWebImage } from "@/lib/server/heic";
 
 export const runtime = "nodejs";
@@ -14,6 +14,7 @@ export async function POST(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!isAdmin(user?.email)) return NextResponse.json({ error: "forbidden" }, { status: 404 });
+  if (!(await isAal2(supabase))) return NextResponse.json({ error: "forbidden" }, { status: 404 });
 
   const form = await req.formData();
   const files = form.getAll("files").filter((f): f is File => f instanceof File);

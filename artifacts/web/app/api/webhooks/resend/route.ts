@@ -11,9 +11,18 @@ function verify(secret: string, headers: Headers, body: string): boolean {
     const ts = headers.get("svix-timestamp");
     const sigHeader = headers.get("svix-signature");
     if (!id || !ts || !sigHeader) return false;
+    // Replay guard: reject events older/newer than 5 minutes.
+    const tsNum = Number(ts);
+    if (!Number.isFinite(tsNum) || Math.abs(Date.now() / 1000 - tsNum) > 300) return false;
     const key = Buffer.from(secret.replace(/^whsec_/, ""), "base64");
     const expected = crypto.createHmac("sha256", key).update(`${id}.${ts}.${body}`).digest("base64");
-    return sigHeader.split(" ").some((p) => p.split(",")[1] === expected);
+    const expBuf = Buffer.from(expected);
+    return sigHeader.split(" ").some((p) => {
+      const sig = p.split(",")[1];
+      if (!sig) return false;
+      const sigBuf = Buffer.from(sig);
+      return sigBuf.length === expBuf.length && crypto.timingSafeEqual(sigBuf, expBuf);
+    });
   } catch {
     return false;
   }

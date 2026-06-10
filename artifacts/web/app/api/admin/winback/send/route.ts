@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createClient } from "@/utils/supabase/server";
-import { isAdmin } from "@/lib/admin/guard";
+import { createAdminClient } from "@/utils/supabase/admin";
+import { isAdmin, isAal2 } from "@/lib/admin/guard";
 import { renderWinbackEmail, type Touch } from "@/lib/email/winback-emails";
 
 export const runtime = "nodejs";
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!isAdmin(user?.email)) return NextResponse.json({ error: "forbidden" }, { status: 404 });
+  if (!(await isAal2(supabase))) return NextResponse.json({ error: "forbidden" }, { status: 404 });
 
   if (!process.env.RESEND_API_KEY) {
     return NextResponse.json({ error: "RESEND_API_KEY not set" }, { status: 500 });
@@ -31,6 +33,21 @@ export async function POST(req: Request) {
   // Safety: test mode always sends only to the signed-in admin.
   const to = body.test ? (user?.email as string) : body.to;
   if (!to) return NextResponse.json({ error: "no_recipient" }, { status: 400 });
+
+  // Hard kill-switch: live sends to real customers stay OFF unless WINBACK_LIVE=true,
+  // and even then only addresses already on the winback list may be emailed.
+  if (!body.test) {
+    if (process.env.WINBACK_LIVE !== "true") {
+      return NextResponse.json({ error: "live_sends_disabled" }, { status: 403 });
+    }
+    const admin = createAdminClient();
+    const { data: target } = await admin
+      .from("winback_targets")
+      .select("email")
+      .ilike("email", to)
+      .maybeSingle();
+    if (!target) return NextResponse.json({ error: "not_a_winback_target" }, { status: 403 });
+  }
 
   const { subject, html } = renderWinbackEmail(touch, body.name);
   // Test previews send from Resend's shared domain so they work before the

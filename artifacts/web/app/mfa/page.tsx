@@ -8,7 +8,9 @@ function MfaChallenge() {
   const supabase = createClient();
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/account";
+  const rawNext = params.get("next") || "/account";
+  // Only allow internal paths — never an absolute/external URL (open-redirect guard).
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/account";
   const [factorId, setFactorId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [code, setCode] = useState("");

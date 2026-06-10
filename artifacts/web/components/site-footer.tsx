@@ -21,6 +21,12 @@ export function SiteFooter() {
           <a href="https://www.facebook.com/WanderlustWonderer/" className="hover:text-amber-400">FACEBOOK</a>
           <Link href="/faq" className="hover:text-amber-400">FAQ</Link>
         </div>
+        <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] tracking-wider text-neutral-500">
+          <Link href="/terms" className="hover:text-amber-400">Terms</Link>
+          <Link href="/privacy" className="hover:text-amber-400">Privacy</Link>
+          <span className="text-neutral-600">·</span>
+          <span>18+ only. All persons depicted are 18 or older.</span>
+        </div>
       </div>
     </footer>
   );
