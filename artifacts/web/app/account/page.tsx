@@ -12,6 +12,7 @@ import { computeAchievements, tenureLabel } from "@/lib/achievements";
 import { ProfileEditor } from "@/components/profile-editor";
 import { ReferralCard } from "@/components/referral-card";
 import { TwoFactorSetup } from "@/components/two-factor-setup";
+import { LoyaltyStatus } from "./loyalty-status";
 import { ensureReferralCode, applyReferral, referralStats, REFERRAL_BONUS } from "@/lib/referral";
 import { cookies } from "next/headers";
 
@@ -158,6 +159,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         )}
 
         <ReferralCard code={referralCode} count={refStats.count} earned={refStats.earned} bonus={REFERRAL_BONUS} />
+
+        <LoyaltyStatus isMember={isMember} tier={tier} />
 
         <TwoFactorSetup />
 

@@ -3,6 +3,7 @@ import { createClient, createAdminClient } from "@/utils/supabase/server";
 import { reconcileLegacyMember } from "@/lib/stripe/reconcile";
 import { tierRank, type MembershipTier } from "@/lib/stripe/tiers";
 import { BuyButton } from "@/components/buy-button";
+import { FlashSale } from "@/components/flash-sale";
 import { CryptoPay } from "@/components/crypto-pay";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
@@ -122,6 +123,7 @@ export default async function SubscribePage() {
         )}
 
         <div className="grid gap-8 md:grid-cols-3">
+          {!isMember && <div className="sm:col-span-3"><FlashSale /></div>}
           {!isMember && (
             <div className="sm:col-span-3 -mt-2 mb-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5 text-center">
               <p className="text-sm text-amber-200">
