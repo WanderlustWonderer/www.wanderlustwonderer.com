@@ -40,12 +40,17 @@ export default async function PortalPage() {
           </div>
         </header>
 
-        {feed.length === 0 ? (
-          <div className="rounded-2xl border border-neutral-800 p-10 text-center text-neutral-400">
-            <p>Nothing here for your access yet.</p>
-            {!ent.tier && <p className="mt-2 text-sm">Join a membership to unlock content, or visit the Vault.</p>}
-          </div>
-        ) : (
+        {/* Content migration notice — remove once the library has fully moved across */}
+        <div className="mb-8 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-6 text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300">Content on its way</p>
+          <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-neutral-200">
+            I&rsquo;m currently moving all of my content over from the old site to this beautiful new home.
+            I expect to have everything migrated across by <strong>Saturday 13th June</strong>.
+            Please bear with me&hellip; it&rsquo;ll be more than worth the wait. x
+          </p>
+        </div>
+
+        {feed.length > 0 && (
           <PortalFeed items={feed as FeedItem[]} watermark={user.email ?? "members only"} />
         )}
       </main>
